@@ -1,0 +1,59 @@
+name: Build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build (${{ matrix.target }} - ${{ matrix.board || 'no board' }})
+    runs-on: ubuntu-latest
+    container: espressif/idf:v6.1
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { board: "",                 target: esp32c5 }
+          - { board: "",                 target: esp32c3 }
+          - { board: scapycon2026badge,  target: esp32c5 }
+          - { board: esp32c3supermini,   target: esp32c3 }
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build
+        shell: bash
+        env:
+          BOARD: ${{ matrix.board }}
+          TARGET: ${{ matrix.target }}
+        run: |
+          set -o pipefail
+          # The checkout is owned by a different user than the container runs as.
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          . "$IDF_PATH/export.sh"   # not written to survive `set -u`
+
+          set -eu
+          idf.py ${BOARD:+-DBOARD=$BOARD} set-target "$TARGET"
+          idf.py ${BOARD:+-DBOARD=$BOARD} build
+
+      - name: Upload firmware
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-${{ matrix.target }}-${{ matrix.board || 'no-board' }}
+          if-no-files-found: error
+          path: |
+            build/*.bin
+            build/*.elf
+            build/*.map
+            build/bootloader/bootloader.bin
+            build/partition_table/partition-table.bin
+            build/flasher_args.json
+            build/config/sdkconfig.json

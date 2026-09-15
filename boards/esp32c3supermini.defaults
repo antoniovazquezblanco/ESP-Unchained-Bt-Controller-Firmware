@@ -1,0 +1,16 @@
+# Board: ESP32-C3 Super Mini
+#
+# ESP32-C3 (QFN32), 4 MB embedded flash, native USB-Serial/JTAG (USB D-/D+ on
+# GPIO18/GPIO19).
+# No display, the only peripherals are a WS2812 on GPIO8 and the
+# boot button on GPIO9, neither of which this firmware uses.
+# Layered on top of the common sdkconfig.defaults by:
+#   idf.py -DBOARD=esp32c3supermini set-target esp32c3 build
+CONFIG_ESPTOOLPY_FLASHSIZE_4MB=y
+
+# HCI transport
+# Use the boards's single USB-C socket, which is wired to the
+# chip's native USB-Serial/JTAG.
+CONFIG_BT_CTRL_HCI_MODE_VHCI=y
+CONFIG_UNCHAINED_HCI_OVER_USB_SERIAL_JTAG=y
+CONFIG_ESP_CONSOLE_SECONDARY_NONE=y

@@ -1,0 +1,83 @@
+menu "ESP Unchained display"
+
+config UNCHAINED_DISPLAY_ENABLED
+    bool "Enable ST7789 SPI display support"
+    default n
+    help
+        Bring up an ST7789 SPI TFT via esp_lcd.
+
+if UNCHAINED_DISPLAY_ENABLED
+
+config UNCHAINED_DISPLAY_SPI_HOST
+    int "SPI host (1=SPI2, 2=SPI3)"
+    default 1
+
+config UNCHAINED_DISPLAY_SCLK_GPIO
+    int "SCLK GPIO"
+    default -1
+
+config UNCHAINED_DISPLAY_MOSI_GPIO
+    int "MOSI GPIO"
+    default -1
+
+config UNCHAINED_DISPLAY_CS_GPIO
+    int "CS GPIO"
+    default -1
+
+config UNCHAINED_DISPLAY_DC_GPIO
+    int "DC GPIO"
+    default -1
+
+config UNCHAINED_DISPLAY_RST_GPIO
+    int "RST GPIO (-1 = software reset)"
+    default -1
+    help
+        Default -1 uses the ST7789 software reset command. Set a real pin here if the board wires one.
+
+config UNCHAINED_DISPLAY_BL_GPIO
+    int "Backlight GPIO (-1 = none / always on)"
+    default -1
+
+config UNCHAINED_DISPLAY_BL_ACTIVE_HIGH
+    bool "Backlight active high"
+    default y
+
+config UNCHAINED_DISPLAY_PCLK_HZ
+    int "SPI pixel clock (Hz)"
+    default 20000000
+
+config UNCHAINED_DISPLAY_WIDTH
+    int "Panel width (px)"
+    default 240
+
+config UNCHAINED_DISPLAY_HEIGHT
+    int "Panel height (px)"
+    default 240
+
+config UNCHAINED_DISPLAY_BGR_ORDER
+    bool "Panel expects BGR subpixel order"
+    default n
+    help
+        Set for panels wired BGR rather than RGB. Wrong setting swaps red and blue; it does not blank the screen.
+
+endif # UNCHAINED_DISPLAY_ENABLED
+
+endmenu
+
+menu "ESP Unchained HCI"
+
+# Variable to note if the controller exposes VHCI.
+# The C5-era ports uses BT_LE_HCI_INTERFACE to indicate this.
+# The C3-era ones BT_CTRL_HCI_MODE.
+config UNCHAINED_HCI_VHCI_AVAILABLE
+    bool
+    default y if BT_LE_HCI_INTERFACE_USE_RAM || BT_CTRL_HCI_MODE_VHCI
+
+config UNCHAINED_HCI_OVER_USB_SERIAL_JTAG
+    bool "Expose HCI over the native USB-Serial/JTAG"
+    depends on UNCHAINED_HCI_VHCI_AVAILABLE && SOC_USB_SERIAL_JTAG_SUPPORTED
+    default n
+    help
+        Expose the controller as a plain H4 HCI device on the chip's USB socket, so no external UART adapter is needed. Requires the VHCI ("RAM") HCI interface; a board that uses the controller's own HCI UART does not need this.
+
+endmenu
