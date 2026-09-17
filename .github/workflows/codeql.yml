@@ -1,0 +1,89 @@
+name: CodeQL
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  schedule:
+    - cron: "25 7 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - language: python
+            build-mode: none
+          - language: actions
+            build-mode: none
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+
+      - name: Perform CodeQL analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{ matrix.language }}"
+
+
+  analyze-firmware:
+    name: Analyze (c-cpp, ${{ matrix.board }})
+    runs-on: ubuntu-latest
+    container: espressif/idf:v6.1
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { board: scapycon2026badge, target: esp32c5 }
+          - { board: esp32c3supermini,  target: esp32c3 }
+          - { board: esp32devkitc,      target: esp32 }
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: c-cpp
+          build-mode: manual
+          config: |
+            paths:
+              - main
+
+      - name: Build firmware
+        shell: bash
+        env:
+          BOARD: ${{ matrix.board }}
+          TARGET: ${{ matrix.target }}
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          . "$IDF_PATH/export.sh"
+          pip install --quiet pillow
+          idf.py -DBOARD="$BOARD" set-target "$TARGET"
+          idf.py -DBOARD="$BOARD" build
+
+      - name: Perform CodeQL analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:c-cpp/board:${{ matrix.board }}"

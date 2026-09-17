@@ -5,6 +5,7 @@
 # ESP Unchained Bluetooth Controller Firmware
 
 [![Build](https://github.com/antoniovazquezblanco/ESP-Unchained-Bt-Controller-Firmware/actions/workflows/build.yml/badge.svg)](https://github.com/antoniovazquezblanco/ESP-Unchained-Bt-Controller-Firmware/actions/workflows/build.yml)
+[![CodeQL](https://github.com/antoniovazquezblanco/ESP-Unchained-Bt-Controller-Firmware/actions/workflows/codeql.yml/badge.svg)](https://github.com/antoniovazquezblanco/ESP-Unchained-Bt-Controller-Firmware/actions/workflows/codeql.yml)
 
 ESP-IDF firmware that turns an Espressif chip into a Bluetooth HCI controller reachable over USB or UART with advanced features unlocked through vendor-specific HCI opcodes.
 
