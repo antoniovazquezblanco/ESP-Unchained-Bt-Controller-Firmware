@@ -79,7 +79,7 @@ jobs:
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           . "$IDF_PATH/export.sh"
-          pip install --quiet pillow
+          pip install --quiet pillow==12.3.0
           idf.py -DBOARD="$BOARD" set-target "$TARGET"
           idf.py -DBOARD="$BOARD" build
 

@@ -44,7 +44,7 @@ jobs:
           # The boot-logo header is generated at build time from utils/logo, so
           # install Pillow into ESP-IDF's Python (the one the build invokes).
           . "$IDF_PATH/export.sh"
-          pip install --quiet pillow
+          pip install --quiet pillow==12.3.0
 
       - name: Configure
         shell: bash
