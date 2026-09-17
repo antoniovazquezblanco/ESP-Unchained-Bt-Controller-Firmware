@@ -3,3 +3,12 @@ build/
 sdkconfig
 sdkconfig.old
 *.log
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Generated files
+utils/logo/*.png
