@@ -41,6 +41,9 @@ esp_err_t bluetooth_init(void)
         return ret;
     }
 
+    /* Vendor-specific (OGF 0x3F) commands that must be registered before enable. */
+    vsc_enable_pre();
+
     ret = esp_bt_controller_enable(BT_MODE);
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "esp_bt_controller_enable failed: %s", esp_err_to_name(ret));
@@ -62,8 +65,8 @@ esp_err_t bluetooth_init(void)
         return ret;
     }
 
-    /* Unlock the vendor-specific (OGF 0x3F). */
-    vsc_enable();
+    /* ...and the vendor-specific commands that must be registered after enable. */
+    vsc_enable_post();
 
     return ESP_OK;
 }
