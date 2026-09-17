@@ -40,10 +40,3 @@ idf.py build
 ```
 idf.py -p <port> flash
 ```
-
-The C-series boards (`scapycon2026badge`, `esp32c3supermini`) reach HCI over their
-native USB-Serial/JTAG -- the same port used for flashing, at any baud (it is USB
-CDC). The classic ESP32 (`esp32devkitc`) has no native USB: HCI is bridged to
-UART0 through the onboard USB-UART bridge at **921600 baud**, and the console is
-disabled so it does not interleave with the H4 stream. Flashing uses that same
-UART0 (esptool resets the board into the ROM loader first).
