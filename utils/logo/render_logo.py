@@ -134,6 +134,43 @@ def _hexcolor(s):
     return tuple(int(s[i:i + 2], 16) for i in (0, 2, 4))
 
 
+def to_c_header(img, var, argv_hint):
+    """RGB565 C header, values byte-swapped into the panel's order.
+
+    Emits `#define <VAR>_W/_H` and `static const uint16_t <var>[]`, ready to pass
+    straight to display_blit (same byte order as the gfx GFX_SWAP colours).
+    """
+    img = img.convert("RGB")
+    w, h = img.size
+    px = img.load()
+    vals = []
+    for y in range(h):
+        for x in range(w):
+            r, g, b = px[x, y]
+            c = ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3)   # RGB565
+            vals.append("0x%04X" % (((c >> 8) | (c << 8)) & 0xFFFF))  # panel byte order
+    body = ",\n".join("    " + ",".join(vals[i:i + 16]) for i in range(0, len(vals), 16))
+    up = var.upper()
+    return (
+        "/*\n"
+        " * Boot splash image -- GENERATED, do not edit.\n"
+        " * Regenerate with:\n"
+        " *   python render_logo.py %s\n"
+        " * RGB565 in the panel's byte order (ready for display_blit).\n"
+        " */\n"
+        "#ifndef UI_%s_H\n"
+        "#define UI_%s_H\n\n"
+        "#include <stdint.h>\n\n"
+        "#define %s_W %d\n"
+        "#define %s_H %d\n\n"
+        "static const uint16_t %s[%s_W * %s_H] = {\n"
+        "%s\n"
+        "};\n\n"
+        "#endif /* UI_%s_H */\n"
+        % (argv_hint, up, up, up, w, up, h, var, up, up, body, up)
+    )
+
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -148,6 +185,10 @@ if __name__ == "__main__":
     ap.add_argument("--bg", type=_hexcolor, default=(0, 0, 0), help="background RRGGBB (default 000000)")
     ap.add_argument("--transparent", action="store_true",
                     help="transparent background instead of --bg (writes an RGBA PNG)")
+    ap.add_argument("--format", choices=("png", "c"), default="png",
+                    help="output a PNG (default) or a C/RGB565 header (--format c)")
+    ap.add_argument("--var", default="logo_img",
+                    help="array name for --format c (default logo_img)")
     ap.add_argument("-o", "--out", default="logo.png")
     a = ap.parse_args()
 
@@ -164,10 +205,16 @@ if __name__ == "__main__":
         ap.error("--links must be >= 0")
 
     canvas, links, scale, (lw, lh), clipped, auto = render(sw, sh, a.margin, a.links, a.bg, a.transparent)
-    canvas.save(a.out)
-    print("%s  %dx%d screen   links=%d%s   logo %dx%d native x%d = %dx%d   bg=%s"
-          % (a.out, sw, sh, links, " (auto)" if auto else "", lw, lh, scale,
-             lw * scale, lh * scale, "transparent" if a.transparent else "#%02X%02X%02X" % a.bg))
+    if a.format == "c":
+        hint = "%d %d --links %d --format c -o %s" % (sw, sh, links, a.out)
+        open(a.out, "w", newline="\n").write(to_c_header(canvas, a.var, hint))
+        print("%s  %s[%d*%d] RGB565   links=%d%s   logo x%d"
+              % (a.out, a.var, sw, sh, links, " (auto)" if auto else "", scale))
+    else:
+        canvas.save(a.out)
+        print("%s  %dx%d screen   links=%d%s   logo %dx%d native x%d = %dx%d   bg=%s"
+              % (a.out, sw, sh, links, " (auto)" if auto else "", lw, lh, scale,
+                 lw * scale, lh * scale, "transparent" if a.transparent else "#%02X%02X%02X" % a.bg))
     if clipped:
         print("  WARNING: screen smaller than the logo at 1x -- it is centre-cropped."
               " Use --links 0 or a larger screen.")

@@ -30,10 +30,23 @@ Options:
 | `--links`  | mid chain sections per side; omit to choose automatically (`0` is valid) |
 | `--bg`     | background colour `RRGGBB` (default `000000`) |
 | `--transparent` | transparent background instead of `--bg` (writes an RGBA PNG) |
+| `--format` | `png` (default) or `c` -- an RGB565 C header for the firmware |
+| `--var`    | array name for `--format c` (default `logo_img`) |
 | `-o`       | output path (default `logo.png`) |
 
 If the screen is smaller than the logo even at 1x, the logo is centre-cropped and
 a warning is printed -- use `--links 0` or a larger screen.
+
+### Firmware boot splash (C header)
+
+`--format c` emits an RGB565 header (bytes already in the panel's order, ready for
+the firmware's `display_blit`) instead of a PNG. The boot splash is generated at
+the panel size and consumed by `main/ui/splash.c`:
+
+    python render_logo.py 320 240 --links 2 --format c -o ../../main/ui/logo_img.h
+
+Regenerate that header whenever the logo changes. Pillow is required, so run it
+with your system Python (not the ESP-IDF venv, which does not ship Pillow).
 
 ## The art
 
