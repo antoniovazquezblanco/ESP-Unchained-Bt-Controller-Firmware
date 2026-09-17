@@ -33,7 +33,7 @@ static void center_text(int y, const char *s, uint16_t fg)
 
 bool splash_show(void)
 {
-    int w = display_width(), h = display_height();
+    int h = display_height();
     /* ESP-IDF derives this from `git describe` (see the build's PROJECT_VER). */
     const char *version = esp_app_get_description()->version;
 
@@ -42,7 +42,7 @@ bool splash_show(void)
     display_draw_image(0, 0, LOGO_IMG_W, LOGO_IMG_H, logo_img);   /* full-screen */
     name_y = h / 2 + 40;                                  /* just below the logo band */
 #else
-    display_fill_rect(0, 0, w, h, C_BG);
+    display_fill_rect(0, 0, display_width(), h, C_BG);
     name_y = (h - (2 * font8x8.h + LINE_GAP)) / 2;        /* centre the two-line block */
 #endif
     center_text(name_y, FW_NAME, C_NAME);
