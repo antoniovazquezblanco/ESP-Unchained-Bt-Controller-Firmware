@@ -9,6 +9,27 @@ The advantages is that this Bluetooth controller has some vendor commands that a
 
 This means that you will be able to use this as any other serial Bluetooth controller in your machine.
 
+## Flashing the firmware
+
+Prebuilt, ready-to-flash packages are published on the [Releases](https://github.com/antoniovazquezblanco/ESP-Unchained-Bt-Controller-Firmware/releases) page, one zip per supported board (named `esp-unchained-<board>-<version>.zip`).
+Each package bundles the firmware, the flashing tool and a small script, so you do **not** need Python, ESP-IDF or any toolchain installed.
+
+To flash your device:
+
+1. Download the zip that matches your board (for example `esp-unchained-scapycon2026badge-...` for the ScapyCon 2026 badge).
+2. Unzip it anywhere.
+3. Connect **only** the board you want to flash, then run the script for your operating system:
+   - **Windows**: double-click `flash.bat`.
+   - **Linux / macOS**: run `./flash.sh` from a terminal.
+
+The script shows the detected device, asks for confirmation and then flashes it.
+
+The serial port is detected automatically. If several serial devices are connected and the wrong one is picked, pass the port explicitly:
+
+- **Windows**: `flash.bat --port COM5`
+- **Linux**: `./flash.sh --port /dev/ttyUSB0`
+- **macOS**: `./flash.sh --port /dev/cu.usbserial-XXXX`
+
 ## Locating the serial port
 
 Once flashed, the board shows up on your computer as a serial (UART) port.
