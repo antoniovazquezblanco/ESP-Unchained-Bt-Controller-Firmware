@@ -1,0 +1,21 @@
+# Board: ESP32-DevKitC (WROOM-32E / WROOM-32UE)
+#
+# Classic ESP32 (dual-core Xtensa), 4 MB flash, no native USB, USB-UART bridge
+# (CP2102 or CH340) wired to # UART0 (TX=GPIO1, RX=GPIO3).
+# Layered on top of the common sdkconfig.defaults by:
+#   idf.py -DBOARD=esp32devkitc set-target esp32 build
+CONFIG_ESPTOOLPY_FLASHSIZE_4MB=y
+
+# Controller in dual mode (BR/EDR + BLE)
+CONFIG_BTDM_CTRL_MODE_BTDM=y
+CONFIG_BTDM_CTRL_HCI_MODE_VHCI=y
+
+# HCI transport
+# Bridge VHCI to UART0, reaches the host via onboard CP2102.
+# That UART cannot also carry the console, so the console is disabled.
+CONFIG_UNCHAINED_HCI_OVER_UART=y
+CONFIG_UNCHAINED_HCI_UART_NUM=0
+CONFIG_UNCHAINED_HCI_UART_TX_GPIO=1
+CONFIG_UNCHAINED_HCI_UART_RX_GPIO=3
+CONFIG_UNCHAINED_HCI_UART_BAUD=921600
+CONFIG_ESP_CONSOLE_NONE=y

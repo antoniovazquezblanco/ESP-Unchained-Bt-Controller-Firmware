@@ -78,10 +78,11 @@ menu "ESP Unchained HCI"
 
 # Variable to note if the controller exposes VHCI.
 # The C5-era ports uses BT_LE_HCI_INTERFACE to indicate this.
-# The C3-era ones BT_CTRL_HCI_MODE.
+# The C3-era ones BT_CTRL_HCI_MODE
+# The classic ESP32 BTDM_CTRL_HCI_MODE
 config UNCHAINED_HCI_VHCI_AVAILABLE
     bool
-    default y if BT_LE_HCI_INTERFACE_USE_RAM || BT_CTRL_HCI_MODE_VHCI
+    default y if BT_LE_HCI_INTERFACE_USE_RAM || BT_CTRL_HCI_MODE_VHCI || BTDM_CTRL_HCI_MODE_VHCI
 
 config UNCHAINED_HCI_OVER_USB_SERIAL_JTAG
     bool "Expose HCI over the native USB-Serial/JTAG"
@@ -89,5 +90,32 @@ config UNCHAINED_HCI_OVER_USB_SERIAL_JTAG
     default n
     help
         Expose the controller as a plain H4 HCI device on the chip's USB socket, so no external UART adapter is needed. Requires the VHCI ("RAM") HCI interface; a board that uses the controller's own HCI UART does not need this.
+
+config UNCHAINED_HCI_OVER_UART
+    bool "Expose HCI over a hardware UART"
+    depends on UNCHAINED_HCI_VHCI_AVAILABLE
+    default n
+    help
+        Bridge the controller's VHCI to a hardware UART, so the board is a plain H4 HCI controller over that UART. Use this on chips without a native USB-Serial/JTAG (e.g. the classic ESP32, reached through its onboard USB-UART bridge on UART0). The chosen UART must not also carry the console -- set CONFIG_ESP_CONSOLE_NONE, or move the console to another UART.
+
+if UNCHAINED_HCI_OVER_UART
+
+config UNCHAINED_HCI_UART_NUM
+    int "HCI UART port number"
+    default 0
+
+config UNCHAINED_HCI_UART_TX_GPIO
+    int "HCI UART TX GPIO"
+    default 1
+
+config UNCHAINED_HCI_UART_RX_GPIO
+    int "HCI UART RX GPIO"
+    default 3
+
+config UNCHAINED_HCI_UART_BAUD
+    int "HCI UART baud rate"
+    default 921600
+
+endif # UNCHAINED_HCI_OVER_UART
 
 endmenu

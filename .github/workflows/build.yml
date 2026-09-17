@@ -23,8 +23,10 @@ jobs:
         include:
           - { board: "",                 target: esp32c5 }
           - { board: "",                 target: esp32c3 }
+          - { board: "",                 target: esp32 }
           - { board: scapycon2026badge,  target: esp32c5 }
           - { board: esp32c3supermini,   target: esp32c3 }
+          - { board: esp32devkitc,       target: esp32 }
     steps:
       - name: Checkout
         uses: actions/checkout@v4

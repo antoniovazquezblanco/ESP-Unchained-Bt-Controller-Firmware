@@ -12,10 +12,11 @@ ESP-IDF firmware that turns an Espressif chip into a Bluetooth HCI controller re
 
 ## Supported hardware
 
-| Board                   |                                        Image                                         |  Target   | Transport              |    Display     |
-| :---------------------- | :----------------------------------------------------------------------------------: | :-------: | :--------------------- | :------------: |
-| **ScapyCon 2026 badge** |  <img src="doc/img/board_scapycon2026.jpg" alt="SCAPYCON 2026 badge" height="120">   | `esp32c5` | Native USB-Serial/JTAG | ST7789 320×240 |
-| **ESP32-C3 SuperMini**  | <img src="doc/img/board_esp32c3supermini.jpg" alt="ESP32-C3 SuperMini" height="120"> | `esp32c3` | Native USB-Serial/JTAG |       -        |
+| Board                                          |                                        Image                                         |  Target   | Transport                        |    Display     |
+| :--------------------------------------------- | :----------------------------------------------------------------------------------: | :-------: | :------------------------------- | :------------: |
+| **ScapyCon 2026 badge**                        |  <img src="doc/img/board_scapycon2026.png" alt="SCAPYCON 2026 badge" height="120">   | `esp32c5` | Native USB-Serial/JTAG           | ST7789 320×240 |
+| **ESP32-C3 SuperMini**                         | <img src="doc/img/board_esp32c3supermini.png" alt="ESP32-C3 SuperMini" height="120"> | `esp32c3` | Native USB-Serial/JTAG           |       -        |
+| **ESP32-DevKitC-32E** / **ESP32-DevKitC-32UE** |  <img src="doc/img/board_esp32devkitc32.png" alt="ESP32-DevKitC-32E" height="120">   |  `esp32`  | UART0 @ 921600 (USB-UART bridge) |       -        |
 
 
 ## Documentation
