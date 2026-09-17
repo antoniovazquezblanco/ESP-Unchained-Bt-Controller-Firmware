@@ -6,13 +6,21 @@
 
 #if CONFIG_UNCHAINED_DISPLAY_ENABLED
 
+#include <string.h>
+
 #include "esp_log.h"
 #include "esp_check.h"
+#include "esp_attr.h"
+#include "esp_heap_caps.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/semphr.h"
 #include "driver/spi_master.h"
 #include "driver/gpio.h"
 #include "esp_lcd_panel_io.h"
 #include "esp_lcd_panel_vendor.h"
 #include "esp_lcd_panel_ops.h"
+
+#include "gfx.h"
 
 /* The bus pins are wiring, so they have no default worth inheriting: a board
  * that enables the display must state all four. Catching it here beats
@@ -29,14 +37,74 @@ static const char *TAG = "DISP";
 #define DISP_H    CONFIG_UNCHAINED_DISPLAY_HEIGHT
 #define DISP_HOST CONFIG_UNCHAINED_DISPLAY_SPI_HOST
 
+#define DRAW_STRIP 32                       /* rows per DMA blit in the draw helpers */
+
 static esp_lcd_panel_handle_t s_panel;
+static SemaphoreHandle_t s_blit_done;       /* given when a blit's DMA completes */
 
 int display_width(void)  { return DISP_W; }
 int display_height(void) { return DISP_H; }
 
+/* esp_lcd queues colour transfers (async); this fires when one finishes. */
+static bool IRAM_ATTR on_blit_done(esp_lcd_panel_io_handle_t io,
+                                   esp_lcd_panel_io_event_data_t *edata, void *ctx)
+{
+    BaseType_t hp = pdFALSE;
+    xSemaphoreGiveFromISR(s_blit_done, &hp);
+    return hp == pdTRUE;
+}
+
 void display_blit(int x, int y, int w, int h, const uint16_t *px)
 {
-    if (s_panel) esp_lcd_panel_draw_bitmap(s_panel, x, y, x + w, y + h, px);
+    if (!s_panel) return;
+    esp_lcd_panel_draw_bitmap(s_panel, x, y, x + w, y + h, px);
+    /* The transfer is async and reads `px` by DMA; wait so the caller may reuse
+     * or free the buffer immediately. */
+    xSemaphoreTake(s_blit_done, portMAX_DELAY);
+}
+
+/* ---- Higher-level draw helpers (own the DMA scratch + strip loop) -------- */
+
+void display_fill_rect(int x, int y, int w, int h, uint16_t color)
+{
+    if (w <= 0 || h <= 0) return;
+    uint16_t *buf = heap_caps_malloc(w * DRAW_STRIP * sizeof(uint16_t), MALLOC_CAP_DMA);
+    if (!buf) return;
+    gfx_fill(buf, w, DRAW_STRIP, color);
+    for (int yy = 0; yy < h; yy += DRAW_STRIP) {
+        int rows = (h - yy < DRAW_STRIP) ? (h - yy) : DRAW_STRIP;
+        display_blit(x, y + yy, w, rows, buf);
+    }
+    heap_caps_free(buf);
+}
+
+/* Draw a w*h RGB565 image (panel byte order). `src` may live in flash: it is
+ * copied into a DMA scratch buffer a strip at a time. */
+void display_draw_image(int x, int y, int w, int h, const uint16_t *src)
+{
+    if (w <= 0 || h <= 0) return;
+    uint16_t *buf = heap_caps_malloc(w * DRAW_STRIP * sizeof(uint16_t), MALLOC_CAP_DMA);
+    if (!buf) return;
+    for (int yy = 0; yy < h; yy += DRAW_STRIP) {
+        int rows = (h - yy < DRAW_STRIP) ? (h - yy) : DRAW_STRIP;
+        memcpy(buf, &src[(size_t)yy * w], (size_t)rows * w * sizeof(uint16_t));
+        display_blit(x, y + yy, w, rows, buf);
+    }
+    heap_caps_free(buf);
+}
+
+/* Draw a NUL-terminated string at (x, y): glyphs in `fg` on a `bg` box. */
+void display_draw_text(int x, int y, const char *s, const font_t *font,
+                       uint16_t fg, uint16_t bg)
+{
+    int tw = (int)strlen(s) * font->w;
+    if (tw <= 0) return;
+    uint16_t *buf = heap_caps_malloc((size_t)tw * font->h * sizeof(uint16_t), MALLOC_CAP_DMA);
+    if (!buf) return;
+    gfx_fill(buf, tw, font->h, bg);
+    gfx_text(buf, tw, 0, 0, s, font, fg);
+    display_blit(x, y, tw, font->h, buf);
+    heap_caps_free(buf);
 }
 
 static void backlight_on(void)
@@ -54,6 +122,9 @@ static void backlight_on(void)
 
 esp_err_t display_init(void)
 {
+    s_blit_done = xSemaphoreCreateBinary();
+    ESP_RETURN_ON_FALSE(s_blit_done, ESP_ERR_NO_MEM, TAG, "blit semaphore");
+
     spi_bus_config_t bus = {
         .sclk_io_num = CONFIG_UNCHAINED_DISPLAY_SCLK_GPIO,
         .mosi_io_num = CONFIG_UNCHAINED_DISPLAY_MOSI_GPIO,
@@ -71,6 +142,7 @@ esp_err_t display_init(void)
         .pclk_hz = CONFIG_UNCHAINED_DISPLAY_PCLK_HZ,
         .spi_mode = 0,
         .trans_queue_depth = 10,
+        .on_color_trans_done = on_blit_done,
         .lcd_cmd_bits = 8,
         .lcd_param_bits = 8,
     };

@@ -8,6 +8,16 @@ config UNCHAINED_DISPLAY_ENABLED
 
 if UNCHAINED_DISPLAY_ENABLED
 
+config UNCHAINED_DISPLAY_LOGO
+    bool "Show the logo image on the boot splash"
+    default y
+    help
+        Draw the pixel-art boot logo -- an embedded ~150 KB RGB565 image -- on the
+        splash screen. Turn this off on flash-constrained boards; the splash then
+        shows just the firmware name. When enabled, the build generates the image
+        header (logo_img.h) from utils/logo -- this needs Pillow in the build
+        Python (pip install pillow). The header itself is not checked in.
+
 config UNCHAINED_DISPLAY_SPI_HOST
     int "SPI host (1=SPI2, 2=SPI3)"
     default 1

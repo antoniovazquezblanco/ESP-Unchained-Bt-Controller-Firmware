@@ -8,6 +8,7 @@
 #include "ui.h"
 #include "display.h"
 #include "console.h"
+#include "splash.h"
 #include "sdkconfig.h"
 
 #if CONFIG_UNCHAINED_DISPLAY_ENABLED
@@ -24,7 +25,10 @@
 
 static const char *TAG = "UI";
 
+#define SPLASH_MS 2000                      /* how long the boot logo stays up */
+
 static bool s_ready;
+static bool s_splash_shown;
 static StreamBufferHandle_t s_sb;
 static vprintf_like_t s_prev;
 
@@ -47,6 +51,16 @@ static int log_vprintf(const char *fmt, va_list ap)
 static void ui_task(void *arg)
 {
     char rx[128];
+
+    /* Hold the splash, then bring up the console -- ui_console_init() repaints the
+     * whole panel, erasing the splash -- and replay the log buffered so far. */
+    if (s_splash_shown) vTaskDelay(pdMS_TO_TICKS(SPLASH_MS));
+    if (ui_console_init() != ESP_OK) {
+        ESP_LOGW(TAG, "console init failed");
+        vTaskDelete(NULL);
+        return;
+    }
+
     for (;;) {
         size_t got = xStreamBufferReceive(s_sb, rx, sizeof(rx), pdMS_TO_TICKS(100));
         if (got) {
@@ -66,12 +80,10 @@ void ui_init(void)
         ESP_LOGW(TAG, "display init failed: %s", esp_err_to_name(ret));
         return;
     }
-    if (ui_console_init() != ESP_OK) {
-        ESP_LOGW(TAG, "console init failed");
-        return;
-    }
+    s_splash_shown = splash_show();         /* logo/name; the task swaps in the
+                                             * console after SPLASH_MS */
 
-    s_sb = xStreamBufferCreate(2048, 1);
+    s_sb = xStreamBufferCreate(4096, 1);    /* buffers the boot log during the splash */
     if (!s_sb) return;
     s_ready = true;
 

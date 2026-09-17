@@ -40,6 +40,9 @@ jobs:
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           . "$IDF_PATH/export.sh"   # not written to survive `set -u`
 
+          # The boot-logo header is generated at build time from utils/logo.
+          pip install --quiet pillow
+
           set -eu
           idf.py ${BOARD:+-DBOARD=$BOARD} set-target "$TARGET"
           idf.py ${BOARD:+-DBOARD=$BOARD} build
