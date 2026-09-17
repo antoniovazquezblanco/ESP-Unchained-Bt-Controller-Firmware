@@ -1,4 +1,7 @@
 /*
+ * SPDX-FileCopyrightText: 2026 Antonio Vázquez Blanco <antoniovazquezblanco@gmail.com>
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ *
  * Software rendering into an in-RAM RGB565 buffer.
  */
 #include "gfx.h"

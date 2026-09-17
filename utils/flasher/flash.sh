@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# SPDX-FileCopyrightText: 2026 Antonio Vázquez Blanco <antoniovazquezblanco@gmail.com>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # ESP Unchained Bluetooth Controller
 # Firmware flasher script
 

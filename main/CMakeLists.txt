@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Antonio Vázquez Blanco <antoniovazquezblanco@gmail.com>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 idf_component_register(SRCS "main.c"
                             "ui/display.c" "ui/font.c" "ui/gfx.c" "ui/console.c" "ui/splash.c" "ui/ui.c"
                             "bluetooth/bluetooth.c" "bluetooth/vsc.c"

@@ -1,4 +1,8 @@
 @echo off
+
+REM SPDX-FileCopyrightText: 2026 Antonio Vázquez Blanco <antoniovazquezblanco@gmail.com>
+REM SPDX-License-Identifier: GPL-3.0-or-later
+
 setlocal EnableExtensions
 cd /d "%~dp0"
 

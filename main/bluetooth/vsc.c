@@ -1,4 +1,7 @@
 /*
+ * SPDX-FileCopyrightText: 2026 Antonio Vázquez Blanco <antoniovazquezblanco@gmail.com>
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ *
  * Espressif vendor-specific (OGF 0x3F) HCI command enablement.
  *
  * The precompiled controller (libble_app.a / libbtdm_app.a) registers its

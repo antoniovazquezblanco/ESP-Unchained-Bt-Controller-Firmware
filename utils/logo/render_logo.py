@@ -1,4 +1,8 @@
-"""Render the ESP-Unchained boot logo onto a black screen of a given size.
+# SPDX-FileCopyrightText: 2026 Antonio Vázquez Blanco <antoniovazquezblanco@gmail.com>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+"""
+Render the ESP-Unchained boot logo onto a black screen of a given size.
 
 The logo is `chain -- rune -- chain`, snapped open on the inner ends so the
 Bluetooth rune breaks free. It is assembled from the native sprites in sprites/
@@ -21,6 +25,7 @@ screens get a longer chain. 0 links is perfectly valid (one snapped link per sid
 
 Screen sizes are the two positional args (width height) or --width/--height.
 """
+
 from PIL import Image
 import argparse
 import os

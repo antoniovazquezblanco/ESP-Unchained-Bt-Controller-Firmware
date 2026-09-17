@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Download the espflash binaries bundled into release packages.
+# SPDX-FileCopyrightText: 2026 Antonio Vázquez Blanco <antoniovazquezblanco@gmail.com>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+"""
+Download the espflash binaries bundled into release packages.
 
 espflash is a single static binary per platform; release packages ship one per
 desktop platform so end users need nothing installed. This fetches them from the

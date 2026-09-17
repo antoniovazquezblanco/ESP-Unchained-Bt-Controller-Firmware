@@ -1,6 +1,9 @@
+# SPDX-FileCopyrightText: 2026 Antonio Vázquez Blanco <antoniovazquezblanco@gmail.com>
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
 # Common firmware configuration, layered under boards/<name>.defaults.
 #
-# What belongs here: settings that are true of the firmware itself, whatever it
+# Here are the settings that are true of the firmware itself, whatever it
 # is built for.
 
 # A controller-only Bluetooth HCI controller with no host stack.

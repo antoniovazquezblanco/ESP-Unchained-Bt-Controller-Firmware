@@ -1,4 +1,7 @@
 /*
+ * SPDX-FileCopyrightText: 2026 Antonio Vázquez Blanco <antoniovazquezblanco@gmail.com>
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ *
  * Display subcomponent: owns the panel driver and hides esp_lcd.
  *
  * Upper layers never see the panel handle; they blit RGB565 pixel buffers to a

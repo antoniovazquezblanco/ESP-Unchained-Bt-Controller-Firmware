@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Antonio Vázquez Blanco <antoniovazquezblanco@gmail.com>
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
 # Board: ESP32-DevKitC (WROOM-32E / WROOM-32UE)
 #
 # Classic ESP32 (dual-core Xtensa), 4 MB flash, no native USB, USB-UART bridge
