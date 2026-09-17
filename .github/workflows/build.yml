@@ -17,6 +17,9 @@ jobs:
     name: Build (${{ matrix.target }} - ${{ matrix.board || 'no board' }})
     runs-on: ubuntu-latest
     container: espressif/idf:v6.1
+    env:
+      BOARD: ${{ matrix.board }}
+      TARGET: ${{ matrix.target }}
     strategy:
       fail-fast: false
       matrix:
@@ -31,34 +34,39 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build
+      - name: Setup
         shell: bash
-        env:
-          BOARD: ${{ matrix.board }}
-          TARGET: ${{ matrix.target }}
         run: |
-          set -o pipefail
           # The checkout is owned by a different user than the container runs as.
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          . "$IDF_PATH/export.sh"   # not written to survive `set -u`
-
-          # The boot-logo header is generated at build time from utils/logo.
+          # The boot-logo header is generated at build time from utils/logo, so
+          # install Pillow into ESP-IDF's Python (the one the build invokes).
+          . "$IDF_PATH/export.sh"
           pip install --quiet pillow
 
-          set -eu
+      - name: Configure
+        shell: bash
+        run: |
+          . "$IDF_PATH/export.sh"
           idf.py ${BOARD:+-DBOARD=$BOARD} set-target "$TARGET"
+
+      - name: Build
+        shell: bash
+        run: |
+          . "$IDF_PATH/export.sh"
           idf.py ${BOARD:+-DBOARD=$BOARD} build
 
-      - name: Upload firmware
+      - name: Distribution
+        if: success() && matrix.board != ''
+        shell: bash
+        run: |
+          . "$IDF_PATH/export.sh"
+          cmake --build build --target distribution
+
+      - name: Upload distribution
+        if: success() && matrix.board != ''
         uses: actions/upload-artifact@v4
         with:
-          name: firmware-${{ matrix.target }}-${{ matrix.board || 'no-board' }}
+          name: distribution-${{ matrix.board }}
           if-no-files-found: error
-          path: |
-            build/*.bin
-            build/*.elf
-            build/*.map
-            build/bootloader/bootloader.bin
-            build/partition_table/partition-table.bin
-            build/flasher_args.json
-            build/config/sdkconfig.json
+          path: build/dist/*.zip
