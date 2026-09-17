@@ -21,4 +21,5 @@ ESP-IDF firmware that turns an Espressif chip into a Bluetooth HCI controller re
 
 ## Documentation
 
+* [Usage](doc/usage.md)
 * [Building](doc/development/building.md)
