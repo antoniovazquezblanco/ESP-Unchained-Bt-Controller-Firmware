@@ -21,9 +21,11 @@
 #define SCR_W   CONFIG_UNCHAINED_DISPLAY_WIDTH
 #define SCR_H   CONFIG_UNCHAINED_DISPLAY_HEIGHT
 #define GLYPH   8                           /* font8x8 cell size */
+#define LEAD    1                           /* blank rows above each text line  */
+#define CELL    (GLYPH + LEAD)              /* line pitch (leading + glyph)      */
 #define BAR_H   (2 * GLYPH)                 /* title bar height */
 #define COLS    (SCR_W / GLYPH)
-#define ROWS    ((SCR_H - BAR_H) / GLYPH)
+#define ROWS    ((SCR_H - BAR_H) / CELL)
 
 /* Colours are RGB565, stored byte-swapped for the panel (big-endian). */
 #define C_BAR_BG GFX_SWAP(0x001F)   /* blue  */
@@ -32,7 +34,7 @@
 #define C_LOG_FG GFX_SWAP(0x07E0)   /* green */
 
 /* ---- State -------------------------------------------------------------- */
-static uint16_t *s_line;                    /* one text row: SCR_W x GLYPH */
+static uint16_t *s_line;                    /* one text line: SCR_W x CELL */
 static char s_buf[ROWS][COLS];              /* console text model */
 static int s_col;                           /* cursor column on bottom row */
 static bool s_in_esc;                       /* stripping an ANSI escape */
@@ -94,12 +96,12 @@ void ui_console_render(void)
 {
     if (!s_line) return;
     for (int r = 0; r < ROWS; r++) {
-        gfx_fill(s_line, SCR_W, GLYPH, C_LOG_BG);
+        gfx_fill(s_line, SCR_W, CELL, C_LOG_BG);
         for (int c = 0; c < COLS; c++) {
             char ch = s_buf[r][c];
-            if (ch != ' ') gfx_glyph(s_line, SCR_W, c * GLYPH, 0, ch, &font8x8, C_LOG_FG);
+            if (ch != ' ') gfx_glyph(s_line, SCR_W, c * GLYPH, LEAD, ch, &font8x8, C_LOG_FG);
         }
-        display_blit(0, BAR_H + r * GLYPH, SCR_W, GLYPH, s_line);
+        display_blit(0, BAR_H + r * CELL, SCR_W, CELL, s_line);
     }
 }
 
@@ -107,7 +109,7 @@ esp_err_t ui_console_init(void)
 {
     if (s_line) return ESP_OK;              /* already initialised */
 
-    s_line = heap_caps_malloc(SCR_W * GLYPH * sizeof(uint16_t), MALLOC_CAP_DMA);
+    s_line = heap_caps_malloc(SCR_W * CELL * sizeof(uint16_t), MALLOC_CAP_DMA);
     if (!s_line) return ESP_ERR_NO_MEM;
 
     for (int r = 0; r < ROWS; r++) memset(s_buf[r], ' ', COLS);
@@ -115,6 +117,15 @@ esp_err_t ui_console_init(void)
 
     draw_topbar();
     ui_console_render();                     /* clears the log area */
+
+    /* The rows need not tile the panel exactly (BAR_H + ROWS*CELL may fall a few
+     * pixels short); paint that leftover strip so it does not show uninitialised
+     * GRAM. It never changes, so once at init is enough. */
+    int margin = (SCR_H - BAR_H) - ROWS * CELL;
+    if (margin > 0) {
+        gfx_fill(s_line, SCR_W, margin, C_LOG_BG);
+        display_blit(0, BAR_H + ROWS * CELL, SCR_W, margin, s_line);
+    }
     return ESP_OK;
 }
 
