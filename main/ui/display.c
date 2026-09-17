@@ -31,9 +31,12 @@ static const char *TAG = "DISP";
 
 static esp_lcd_panel_handle_t s_panel;
 
-esp_lcd_panel_handle_t display_panel(void)
+int display_width(void)  { return DISP_W; }
+int display_height(void) { return DISP_H; }
+
+void display_blit(int x, int y, int w, int h, const uint16_t *px)
 {
-    return s_panel;
+    if (s_panel) esp_lcd_panel_draw_bitmap(s_panel, x, y, x + w, y + h, px);
 }
 
 static void backlight_on(void)
