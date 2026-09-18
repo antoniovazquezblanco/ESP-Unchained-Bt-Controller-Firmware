@@ -13,3 +13,4 @@ project(esp_unchained_bt_controller)
 # Target helpers
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/espflash.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/release.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/cmake/logo.cmake")
