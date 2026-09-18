@@ -9,8 +9,7 @@
 #include "esp_log.h"
 #include "esp_bt.h"
 
-#include "hci_usb.h"
-#include "hci_uart.h"
+#include "transport/transport.h"
 #include "vsc.h"
 
 static const char *TAG = "BT";
@@ -55,16 +54,10 @@ esp_err_t bluetooth_init(void)
 
     ESP_LOGI(TAG, "HCI controller enabled (mode %d)", (int)BT_MODE);
 
-    /* With VHCI the transport is ours to provide; each bridge is a no-op unless
-     * its board selected it. */
-    ret = hci_usb_init();
+    // Initialize the HCI transport
+    ret = transport_init();
     if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "hci_usb_init failed: %s", esp_err_to_name(ret));
-        return ret;
-    }
-    ret = hci_uart_init();
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "hci_uart_init failed: %s", esp_err_to_name(ret));
+        ESP_LOGE(TAG, "bluetooth_transport_init failed: %s", esp_err_to_name(ret));
         return ret;
     }
 

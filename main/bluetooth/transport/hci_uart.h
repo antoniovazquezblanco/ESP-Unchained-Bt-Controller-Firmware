@@ -13,8 +13,10 @@
  * Bridge the controller's VHCI interface to a hardware UART, so the board is a
  * plain H4 HCI controller over that UART. For chips without native
  * USB-Serial/JTAG (e.g. the classic ESP32, reached through its onboard USB-UART
- * bridge on UART0). Call once, after the controller has been enabled. A no-op
- * unless CONFIG_UNCHAINED_HCI_OVER_UART.
+ * bridge on UART0). Call once, after the controller has been enabled.
+ *
+ * Internal to transport/: compiled only when this bridge is the selected
+ * transport, and reached through bluetooth_transport_init().
  */
 esp_err_t hci_uart_init(void);
 

@@ -14,8 +14,6 @@
 #include "hci_usb.h"
 #include "sdkconfig.h"
 
-#if CONFIG_UNCHAINED_HCI_OVER_USB_SERIAL_JTAG
-
 #include "driver/usb_serial_jtag.h"
 #include "esp_bt.h"
 #include "esp_check.h"
@@ -223,9 +221,3 @@ esp_err_t hci_usb_init(void)
     ESP_LOGI(TAG, "HCI H4 bridged to USB-Serial/JTAG");
     return ESP_OK;
 }
-
-#else /* !CONFIG_UNCHAINED_HCI_OVER_USB_SERIAL_JTAG */
-
-esp_err_t hci_usb_init(void) { return ESP_OK; }
-
-#endif

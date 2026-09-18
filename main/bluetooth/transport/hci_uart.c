@@ -2,18 +2,13 @@
  * SPDX-FileCopyrightText: 2026 Antonio Vázquez Blanco <antoniovazquezblanco@gmail.com>
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
- * HCI (H4) over a hardware UART.
+ * HCI over a hardware UART transport.
  *
- * The UART counterpart of hci_usb.c, for chips without a native USB-Serial/JTAG
- * (e.g. the classic ESP32, reached through its onboard USB-UART bridge on
- * UART0). It bridges the controller's VHCI interface to a UART: bytes in are
- * reassembled into HCI packets and handed to the controller, packets out are
- * streamed back. The result is an ordinary H4 controller over that UART.
+ * This requires an external UART to USB on a board to connect to a PC.
  */
+
 #include "hci_uart.h"
 #include "sdkconfig.h"
-
-#if CONFIG_UNCHAINED_HCI_OVER_UART
 
 #include "driver/uart.h"
 #include "esp_bt.h"
@@ -237,9 +232,3 @@ esp_err_t hci_uart_init(void)
              HCI_UART_PORT, CONFIG_UNCHAINED_HCI_UART_BAUD);
     return ESP_OK;
 }
-
-#else /* !CONFIG_UNCHAINED_HCI_OVER_UART */
-
-esp_err_t hci_uart_init(void) { return ESP_OK; }
-
-#endif
