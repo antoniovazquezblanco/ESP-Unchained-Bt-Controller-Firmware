@@ -13,3 +13,6 @@ __pycache__/
 # Generated files
 utils/logo/*.png
 main/ui/logo_img.h
+
+# IDEs
+.vscode/
