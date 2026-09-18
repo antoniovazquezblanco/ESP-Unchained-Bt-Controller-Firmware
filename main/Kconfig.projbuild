@@ -87,19 +87,30 @@ config UNCHAINED_HCI_VHCI_AVAILABLE
     bool
     default y if BT_LE_HCI_INTERFACE_USE_RAM || BT_CTRL_HCI_MODE_VHCI || BTDM_CTRL_HCI_MODE_VHCI
 
-config UNCHAINED_HCI_OVER_USB_SERIAL_JTAG
-    bool "Expose HCI over the native USB-Serial/JTAG"
-    depends on UNCHAINED_HCI_VHCI_AVAILABLE && SOC_USB_SERIAL_JTAG_SUPPORTED
-    default n
+choice UNCHAINED_HCI_TRANSPORT
+    prompt "HCI transport exposed to the host"
+    depends on UNCHAINED_HCI_VHCI_AVAILABLE
+    default UNCHAINED_HCI_TRANSPORT_NONE
     help
-        Expose the controller as a plain H4 HCI device on the chip's USB socket, so no external UART adapter is needed. Requires the VHCI ("RAM") HCI interface; a board that uses the controller's own HCI UART does not need this.
+        Which transport the controller's VHCI interface is bridged to, turning the board into a plain H4 HCI controller on that link.
+
+config UNCHAINED_HCI_TRANSPORT_NONE
+    bool "None"
+    help
+        Do not bridge VHCI anywhere. The controller comes up but no host can reach it, so pick this only for a board that talks to the controller some other way.
+
+config UNCHAINED_HCI_OVER_USB_SERIAL_JTAG
+    bool "Native USB-Serial/JTAG"
+    depends on SOC_USB_SERIAL_JTAG_SUPPORTED
+    help
+        Expose the controller as a plain H4 HCI device on the chip's USB socket, so no external UART adapter is needed. The endpoint must not also carry the console -- set CONFIG_ESP_CONSOLE_NONE, or move the console elsewhere.
 
 config UNCHAINED_HCI_OVER_UART
-    bool "Expose HCI over a hardware UART"
-    depends on UNCHAINED_HCI_VHCI_AVAILABLE
-    default n
+    bool "Hardware UART"
     help
         Bridge the controller's VHCI to a hardware UART, so the board is a plain H4 HCI controller over that UART. Use this on chips without a native USB-Serial/JTAG (e.g. the classic ESP32, reached through its onboard USB-UART bridge on UART0). The chosen UART must not also carry the console -- set CONFIG_ESP_CONSOLE_NONE, or move the console to another UART.
+
+endchoice
 
 if UNCHAINED_HCI_OVER_UART
 
