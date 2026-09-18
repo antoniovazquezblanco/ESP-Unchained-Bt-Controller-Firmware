@@ -8,6 +8,9 @@ if(CONFIG_UNCHAINED_HCI_OVER_USB_SERIAL_JTAG)
 elseif(CONFIG_UNCHAINED_HCI_OVER_UART)
     list(APPEND hci_transport_srcs "bluetooth/transport/hci_uart.c")
 endif()
+if(hci_transport_srcs)
+    list(APPEND hci_transport_srcs "bluetooth/transport/vhci_bridge.c")
+endif()
 
 idf_component_register(SRCS "main.c"
                             "ui/display.c" "ui/font.c" "ui/gfx.c" "ui/console.c" "ui/splash.c" "ui/ui.c"
