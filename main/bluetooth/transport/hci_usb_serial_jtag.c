@@ -2,18 +2,14 @@
  * SPDX-FileCopyrightText: 2026 Antonio Vázquez Blanco <antoniovazquezblanco@gmail.com>
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
- * HCI (H4) over the chip's native USB-Serial/JTAG.
- *
- * The controller offers two HCI transports (ESP-IDF BT_LE_HCI_INTERFACE): a
- * hardware UART, or VHCI -- an in-RAM interface the application pumps itself.
- * A board whose only socket is the chip's USB-Serial/JTAG cannot use the UART
- * without an external adapter, so this bridges VHCI to that endpoint: bytes in
- * are reassembled into HCI packets and handed to the controller, packets out
- * are streamed back. The result is an ordinary H4 controller over USB.
+ * HCI over the chip's native USB-Serial/JTAG transport.
+ * This is the chip's own serial peripheral, not a USB Bluetooth device class,
+ * so the board enumerates as a serial port and needs no external adapter.
  */
-#include "hci_usb.h"
-#include "sdkconfig.h"
 
+#include "hci_usb_serial_jtag.h"
+
+#include "sdkconfig.h"
 #include "driver/usb_serial_jtag.h"
 #include "esp_bt.h"
 #include "esp_check.h"
@@ -23,20 +19,20 @@
 #include "freertos/stream_buffer.h"
 #include "freertos/task.h"
 
-/* HCI owns the USB-Serial/JTAG endpoint. Anything else writing there
- * interleaves its bytes with HCI packets and desynchronises the H4 stream, so
- * a console on the same endpoint is a build error rather than a device that
- * enumerates fine and then misbehaves under load. A board that wants its
- * console back on USB should drive HCI over the controller's own UART
- * (CONFIG_BT_LE_HCI_INTERFACE_USE_UART), which disables this bridge. */
+/*
+ * HCI owns the USB-Serial/JTAG endpoint.
+ * Anything else writing there causes faults and desynchronises the stream.
+ * Check that the configuration is correct and nothing else writes to this
+ * USB Serial/Jtag endpoint.
+ */
 #if CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG
-#error "HCI is bridged to USB-Serial/JTAG but the primary console is on it too. Set the console elsewhere, or use the controller's HCI UART instead."
+#error "HCI is bridged to USB-Serial/JTAG but the primary console is on it too. Set the console elsewhere, or use other HCI transport instead."
 #endif
 #if CONFIG_ESP_CONSOLE_SECONDARY_USB_SERIAL_JTAG
-#error "HCI is bridged to USB-Serial/JTAG but the secondary console is on it too. Set CONFIG_ESP_CONSOLE_SECONDARY_NONE, or use the controller's HCI UART instead."
+#error "HCI is bridged to USB-Serial/JTAG but the secondary console is on it too. Set CONFIG_ESP_CONSOLE_SECONDARY_NONE, or use other HCI transport instead."
 #endif
 
-static const char *TAG = "HCIUSB";
+static const char *TAG = "HCIUSJ";
 
 /* H4 packet-type indicators. */
 #define H4_CMD  0x01
@@ -83,7 +79,7 @@ static const esp_vhci_host_callback_t s_vhci_cb = {
     .notify_host_recv = notify_host_recv,
 };
 
-static void hci_usb_tx_task(void *arg)
+static void hci_usb_serial_jtag_tx_task(void *arg)
 {
     uint8_t buf[256];
     for (;;) {
@@ -138,7 +134,7 @@ static void send_to_controller(uint8_t *frame, size_t len)
     esp_vhci_host_send_packet(frame, (uint16_t)len);
 }
 
-static void hci_usb_rx_task(void *arg)
+static void hci_usb_serial_jtag_rx_task(void *arg)
 {
     static uint8_t frame[H4_MAX_FRAME];
     uint8_t chunk[128];
@@ -197,7 +193,7 @@ static void hci_usb_rx_task(void *arg)
     }
 }
 
-esp_err_t hci_usb_init(void)
+esp_err_t hci_usb_serial_jtag_init(void)
 {
     s_tx = xStreamBufferCreate(TX_STREAM_BYTES, 1);
     ESP_RETURN_ON_FALSE(s_tx, ESP_ERR_NO_MEM, TAG, "tx stream buffer");
@@ -213,9 +209,9 @@ esp_err_t hci_usb_init(void)
 
     ESP_RETURN_ON_ERROR(esp_vhci_host_register_callback(&s_vhci_cb), TAG, "vhci callback");
 
-    ESP_RETURN_ON_FALSE(xTaskCreate(hci_usb_tx_task, "hci_tx", 3072, NULL, 12, NULL) == pdPASS,
+    ESP_RETURN_ON_FALSE(xTaskCreate(hci_usb_serial_jtag_tx_task, "hci_tx", 3072, NULL, 12, NULL) == pdPASS,
                         ESP_ERR_NO_MEM, TAG, "tx task");
-    ESP_RETURN_ON_FALSE(xTaskCreate(hci_usb_rx_task, "hci_rx", 4096, NULL, 12, NULL) == pdPASS,
+    ESP_RETURN_ON_FALSE(xTaskCreate(hci_usb_serial_jtag_rx_task, "hci_rx", 4096, NULL, 12, NULL) == pdPASS,
                         ESP_ERR_NO_MEM, TAG, "rx task");
 
     ESP_LOGI(TAG, "HCI H4 bridged to USB-Serial/JTAG");

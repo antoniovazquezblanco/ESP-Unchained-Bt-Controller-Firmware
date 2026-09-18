@@ -4,7 +4,7 @@
 # HCI transports
 set(hci_transport_srcs "")
 if(CONFIG_UNCHAINED_HCI_OVER_USB_SERIAL_JTAG)
-    list(APPEND hci_transport_srcs "bluetooth/transport/hci_usb.c")
+    list(APPEND hci_transport_srcs "bluetooth/transport/hci_usb_serial_jtag.c")
 elseif(CONFIG_UNCHAINED_HCI_OVER_UART)
     list(APPEND hci_transport_srcs "bluetooth/transport/hci_uart.c")
 endif()

@@ -3,13 +3,12 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * HCI over a hardware UART transport.
- *
  * This requires an external UART to USB on a board to connect to a PC.
  */
 
 #include "hci_uart.h"
-#include "sdkconfig.h"
 
+#include "sdkconfig.h"
 #include "driver/uart.h"
 #include "esp_bt.h"
 #include "esp_check.h"
@@ -19,12 +18,14 @@
 #include "freertos/stream_buffer.h"
 #include "freertos/task.h"
 
-/* HCI owns this UART. A console on the same UART would interleave its text with
- * HCI packets and desynchronise the H4 stream, so it is a build error rather
- * than a device that enumerates fine and then misbehaves. Put the console on a
- * different UART, or set CONFIG_ESP_CONSOLE_NONE. */
+/*
+ * HCI owns the UART.
+ * Anything else writing there causes faults and desynchronises the stream.
+ * Check that the configuration is correct and nothing else writes to this
+ * UART.
+ */
 #if CONFIG_ESP_CONSOLE_UART && (CONFIG_ESP_CONSOLE_UART_NUM == CONFIG_UNCHAINED_HCI_UART_NUM)
-#error "HCI is bridged to a UART that also carries the console. Set the console elsewhere (CONFIG_ESP_CONSOLE_NONE), or use a different UART for HCI."
+#error "HCI is bridged to a UART that also carries the console. Set the console elsewhere (CONFIG_ESP_CONSOLE_NONE), or use a different HCI transport."
 #endif
 
 static const char *TAG = "HCIUART";

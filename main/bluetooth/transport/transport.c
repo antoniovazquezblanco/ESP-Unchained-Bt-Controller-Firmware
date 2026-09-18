@@ -11,7 +11,7 @@
 #include "esp_log.h"
 
 #if CONFIG_UNCHAINED_HCI_OVER_USB_SERIAL_JTAG
-#include "hci_usb.h"
+#include "hci_usb_serial_jtag.h"
 #elif CONFIG_UNCHAINED_HCI_OVER_UART
 #include "hci_uart.h"
 #endif
@@ -23,7 +23,7 @@ esp_err_t transport_init(void)
     ESP_LOGI(TAG, "Initializing Bluetooth transport");
 
 #if CONFIG_UNCHAINED_HCI_OVER_USB_SERIAL_JTAG
-    return hci_usb_init();
+    return hci_usb_serial_jtag_init();
 #elif CONFIG_UNCHAINED_HCI_OVER_UART
     return hci_uart_init();
 #else
