@@ -18,10 +18,16 @@ if(CONFIG_UNCHAINED_DISPLAY_ENABLED)
     set(srcs_ui "ui/ui.c" "ui/display.c" "ui/console.c" "ui/splash.c" "ui/gfx.c" "ui/font.c")
 endif()
 
+# Requires
+# Cannot be gated on CONFIG_*
+set(requires
+    bt nvs_flash esp_app_format                     # Core
+    esp_driver_uart esp_driver_usb_serial_jtag      # HCI transport
+    esp_lcd esp_driver_spi esp_driver_gpio)         # UI / Display
+
 idf_component_register(SRCS "main.c"
                             "bluetooth/bluetooth.c" "bluetooth/vsc.c"
                             "bluetooth/transport/transport.c" ${srcs_hci_transport} ${srcs_ui}
-                       PRIV_REQUIRES bt nvs_flash esp_driver_uart esp_driver_usb_serial_jtag
-                                     esp_lcd esp_driver_spi esp_driver_gpio esp_app_format
+                       PRIV_REQUIRES ${requires}
                        INCLUDE_DIRS "." "ui" "bluetooth"
                        REQUIRED_IDF_TARGETS esp32c5 esp32c3 esp32)
