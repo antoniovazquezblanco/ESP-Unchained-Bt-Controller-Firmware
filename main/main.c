@@ -11,14 +11,19 @@
 
 #include "esp_err.h"
 #include "nvs_flash.h"
+#include "sdkconfig.h"
 
-#include "ui.h"
 #include "bluetooth.h"
+#if CONFIG_UNCHAINED_DISPLAY_ENABLED
+#include "ui.h"
+#endif
 
 void app_main(void)
 {
+#if CONFIG_UNCHAINED_DISPLAY_ENABLED
     /* UI initialization */
     ui_init();
+#endif
 
     /* NVS initialization */
     esp_err_t ret = nvs_flash_init();

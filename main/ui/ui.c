@@ -94,8 +94,4 @@ void ui_init(void)
     s_prev = esp_log_set_vprintf(log_vprintf);
 }
 
-#else /* !CONFIG_UNCHAINED_DISPLAY_ENABLED */
-
-void ui_init(void) { }
-
 #endif
