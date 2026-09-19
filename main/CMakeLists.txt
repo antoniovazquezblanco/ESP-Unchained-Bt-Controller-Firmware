@@ -25,6 +25,10 @@ set(requires
     esp_driver_uart esp_driver_usb_serial_jtag      # HCI transport
     esp_lcd esp_driver_spi esp_driver_gpio)         # UI / Display
 
+if(IDF_TARGET STREQUAL "esp32")
+    list(APPEND requires esp32_bt_rom)
+endif()
+
 idf_component_register(SRCS "main.c"
                             "bluetooth/bluetooth.c" "bluetooth/vsc.c"
                             "bluetooth/transport/transport.c" ${srcs_hci_transport} ${srcs_ui}
