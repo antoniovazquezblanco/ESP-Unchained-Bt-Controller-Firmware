@@ -11,6 +11,7 @@
 #include <stdbool.h>
 
 #include "r_ip_funcs.h"
+#include "r_modules_funcs.h"
 
 /**
  * A self-test function for the ESP32 Bluetooth ROM functions.
