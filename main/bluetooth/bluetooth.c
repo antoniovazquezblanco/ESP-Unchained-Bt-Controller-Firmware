@@ -12,6 +12,10 @@
 #include "transport/transport.h"
 #include "vsc.h"
 
+#ifdef CONFIG_IDF_TARGET_ESP32
+#include "esp32_bt_rom.h"
+#endif
+
 static const char *TAG = "BT";
 
 /* Controller mode: dual (BR/EDR + BLE) where the chip and its config ask for it
@@ -53,6 +57,12 @@ esp_err_t bluetooth_init(void)
     }
 
     ESP_LOGI(TAG, "HCI controller enabled (mode %d)", (int)BT_MODE);
+
+#ifdef CONFIG_IDF_TARGET_ESP32
+    /* Read-only on-chip check: the controller has populated r_ip_funcs_p. */
+    ESP_LOGI(TAG, "esp32_bt_rom: r_ip_funcs_p=%p selftest=%s",
+             (void *)r_ip_funcs_p, esp32_bt_rom_selftest() ? "ok" : "NULL");
+#endif
 
     // Initialize the HCI transport
     ret = transport_init();
