@@ -11,7 +11,15 @@
 
 #include <stdbool.h>
 
-/*
+/**
+ * Signature of r_bt_util_buf_init, slot 0 of the IP functions table.
+ * It (re)initialises the controller's exchange-memory buffer pools, tearing
+ * them  down first when reset is non-zero. Recovered from the loaded
+ * controller.
+ */
+typedef void (*r_bt_util_buf_init_fn_t)(bool reset);
+
+/**
  * RivieraWaves "IP functions" dispatch table type definition.
  *
  * This is a function pointer table used by RivieraWaves' Bluetooth stack.
@@ -21,7 +29,8 @@
  * or patching of the functions at runtime.
  */
 struct r_ip_funcs {
-    void *fn[]; /* length recovered per library version */
+    r_bt_util_buf_init_fn_t bt_util_buf_init; /* [0] */
+    void *fn[];                               /* [1..] not yet typed */
 };
 
 /**
