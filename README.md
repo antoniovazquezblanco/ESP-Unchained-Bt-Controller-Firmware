@@ -7,6 +7,7 @@
 [![Build](https://github.com/antoniovazquezblanco/ESP-Unchained-Bt-Controller-Firmware/actions/workflows/build.yml/badge.svg)](https://github.com/antoniovazquezblanco/ESP-Unchained-Bt-Controller-Firmware/actions/workflows/build.yml)
 [![CodeQL](https://github.com/antoniovazquezblanco/ESP-Unchained-Bt-Controller-Firmware/actions/workflows/codeql.yml/badge.svg)](https://github.com/antoniovazquezblanco/ESP-Unchained-Bt-Controller-Firmware/actions/workflows/codeql.yml)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/antoniovazquezblanco/ESP-Unchained-Bt-Controller-Firmware/badge)](https://securityscorecards.dev/viewer/?uri=github.com/antoniovazquezblanco/ESP-Unchained-Bt-Controller-Firmware)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE.md)
 
 ESP-IDF firmware that turns an Espressif chip into a Bluetooth HCI controller reachable over USB or UART with advanced features unlocked through vendor-specific HCI opcodes.
 
