@@ -26,7 +26,7 @@ set(requires
     esp_lcd esp_driver_spi esp_driver_gpio)         # UI / Display
 
 if(IDF_TARGET STREQUAL "esp32")
-    list(APPEND requires esp32_bt_rom)
+    list(APPEND requires esp32_bt_unchained)
 endif()
 
 idf_component_register(SRCS "main.c"
