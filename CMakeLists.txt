@@ -8,6 +8,7 @@ include("${CMAKE_CURRENT_LIST_DIR}/cmake/board.cmake")
 
 # Project
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
+idf_build_set_property(MINIMAL_BUILD ON)
 project(esp_unchained_bt_controller)
 
 # Target helpers
