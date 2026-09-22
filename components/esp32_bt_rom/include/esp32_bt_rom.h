@@ -92,6 +92,56 @@ typedef uint16_t (*r_bt_util_buf_sync_tx_alloc_fn_t)(uint8_t sync_id, uint8_t le
 typedef void (*r_bt_util_buf_sync_tx_free_fn_t)(uint8_t sync_id, uint16_t buf);
 
 /**
+ * Signature of r_bt_util_buf_sync_rx_alloc, slot 11 of the IP functions table.
+ * It allocates a sync (SCO/eSCO) RX buffer for the given sync link, returning
+ * its EM offset (0 when none free). Recovered from the loaded controller.
+ */
+typedef uint16_t (*r_bt_util_buf_sync_rx_alloc_fn_t)(uint8_t sync_id, uint8_t len);
+
+/**
+ * Signature of r_bt_util_buf_sync_rx_free, slot 12 of the IP functions table.
+ * It releases the sync (SCO/eSCO) RX buffer at the given exchange-memory offset
+ * for the given sync link. Recovered from the loaded controller.
+ */
+typedef void (*r_bt_util_buf_sync_rx_free_fn_t)(uint8_t sync_id, uint16_t buf);
+
+/**
+ * Signature of r_E1, slot 13: the BR/EDR E1 authentication function (SAFER+),
+ * producing SRES and ACO from the link key, RAND and BD_ADDR. Six pointer args.
+ */
+typedef void (*r_E1_fn_t)(uint8_t *, uint8_t *, uint8_t *, uint8_t *, uint8_t *, uint8_t *);
+
+/**
+ * Signature of r_E21, slot 14: BR/EDR E21, derives a unit/combination key from a
+ * RAND and a BD_ADDR. Six pointer args (inferred).
+ */
+typedef void (*r_E21_fn_t)(uint8_t *, uint8_t *, uint8_t *, uint8_t *, uint8_t *, uint8_t *);
+
+/**
+ * Signature of r_E22, slot 15: BR/EDR E22, derives an initialisation/PIN key
+ * from a RAND, the PIN and a BD_ADDR. Six pointer args (inferred).
+ */
+typedef void (*r_E22_fn_t)(uint8_t *, uint8_t *, uint8_t *, uint8_t *, uint8_t *, uint8_t *);
+
+/**
+ * Signature of r_E3, slot 16: BR/EDR E3, derives the ciphering key Kc from the
+ * link key, a RAND and the ACO. Four pointer args (inferred).
+ */
+typedef void (*r_E3_fn_t)(uint8_t *, uint8_t *, uint8_t *, uint8_t *);
+
+/**
+ * Signature of r_KPrimC, slot 17: derives the constrained key Kc' from Kc for
+ * reduced-key-length encryption. Four pointer args plus a uint8_t (inferred).
+ */
+typedef void (*r_KPrimC_fn_t)(uint8_t *, uint8_t *, uint8_t *, uint8_t *, uint8_t);
+
+/**
+ * Signature of r_XorKey, slot 18: XORs two key/byte buffers into an output
+ * buffer. Four pointer args (inferred).
+ */
+typedef void (*r_XorKey_fn_t)(uint8_t *, uint8_t *, uint8_t *, uint8_t *);
+
+/**
  * RivieraWaves "IP functions" dispatch table type definition.
  *
  * This is a function pointer table used by RivieraWaves' Bluetooth stack.
@@ -113,7 +163,15 @@ struct r_ip_funcs
     r_bt_util_buf_sync_clear_fn_t bt_util_buf_sync_clear;       /* [8] */
     r_bt_util_buf_sync_tx_alloc_fn_t bt_util_buf_sync_tx_alloc; /* [9] */
     r_bt_util_buf_sync_tx_free_fn_t bt_util_buf_sync_tx_free;   /* [10] */
-    void *fn[];                                                 /* [11..] not yet typed */
+    r_bt_util_buf_sync_rx_alloc_fn_t bt_util_buf_sync_rx_alloc; /* [11] */
+    r_bt_util_buf_sync_rx_free_fn_t bt_util_buf_sync_rx_free;   /* [12] */
+    r_E1_fn_t E1;                                               /* [13] */
+    r_E21_fn_t E21;                                             /* [14] */
+    r_E22_fn_t E22;                                             /* [15] */
+    r_E3_fn_t E3;                                               /* [16] */
+    r_KPrimC_fn_t KPrimC;                                       /* [17] */
+    r_XorKey_fn_t XorKey;                                       /* [18] */
+    void *fn[];                                                 /* [19..] not yet typed */
 };
 
 /**
