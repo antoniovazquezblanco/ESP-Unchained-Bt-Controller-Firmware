@@ -9,4 +9,32 @@
 #ifndef ESP32_BT_ROM_H
 #define ESP32_BT_ROM_H
 
+#include <stdbool.h>
+
+/*
+ * RivieraWaves "IP functions" dispatch table type definition.
+ *
+ * This is a function pointer table used by RivieraWaves' Bluetooth stack.
+ * Because the base RivieraWaves stack is provided in ROM (read-only memory),
+ * it cannot be modified directly. For this reason, the stack calls the functions
+ * via this pointer table indirectly because it  allows for dynamic replacement
+ * or patching of the functions at runtime.
+ */
+struct r_ip_funcs {
+    void *fn[]; /* length recovered per library version */
+};
+
+/**
+ * Pointer to the RivieraWaves IP functions table.
+ * 
+ * The linker resolves the symbol location against libbtdm_app.a with a fallback
+ * on esp32.rom.ld to the internal ROM position.
+ */
+extern struct r_ip_funcs *r_ip_funcs_p;
+
+/**
+ * A self-test function for the ESP32 Bluetooth ROM functions.
+ */
+bool esp32_bt_rom_selftest(void);
+
 #endif /* ESP32_BT_ROM_H */
