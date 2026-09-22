@@ -303,9 +303,20 @@ typedef uint32_t (*r_ke_get_max_mem_usage_fn_t)(void);
 
 /**
  * r_ke_msg_alloc, slot 48 of the r_modules_funcs table.
- * Kernel: message alloc.
+ * Allocates a kernel message from the heap: a 12-byte ke_msg header followed by
+ * param_len bytes of parameters. Fills the header (list-next sentinel 0xFFFFFFFF,
+ * id, dest_id, src_id, param_len) and zero-fills the parameter area. Returns a
+ * pointer to that parameter area (header + 12); the send/free helpers recover the
+ * header via negative offsets, so hand this pointer to ke_msg_send() or
+ * hci_send_2_host() rather than freeing it directly.
+ *
+ * @param id        message id (ke_msg_id_t).
+ * @param dest_id   destination task id (ke_task_id_t).
+ * @param src_id    source task id (ke_task_id_t).
+ * @param param_len size in bytes of the parameter area to allocate.
+ * @return pointer to the zero-filled parameter area (ke_msg header + 12 bytes).
  */
-typedef void (*r_ke_msg_alloc_fn_t)(uint16_t, uint16_t, uint16_t, uint16_t);
+typedef void *(*r_ke_msg_alloc_fn_t)(uint16_t id, uint16_t dest_id, uint16_t src_id, uint16_t param_len);
 
 /**
  * r_ke_msg_send, slot 49 of the r_modules_funcs table.

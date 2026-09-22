@@ -579,9 +579,17 @@ typedef void (*r_hci_reset_hack_fn_t)(void);
 
 /**
  * r_hci_send_2_host_hack, slot 92 of the IP functions table.
- * HCI: send 2 host (Espressif override).
+ * Delivers a completed HCI message to the host. Takes the parameter-area pointer
+ * from ke_msg_alloc() and reads the message id/kind through negative offsets
+ * (param[-8] = id). Applies the HCI event mask and the event/advertising filter
+ * tables in hci_env, then either forwards the message to the transport
+ * (hci_tl_send) or, when masked or filtered out, drops it; either way the
+ * underlying ke_msg is released before returning. The ROM default target is
+ * r_hci_send_2_host; this slot is an Espressif override point (hence "_hack").
+ *
+ * @param param parameter-area pointer from ke_msg_alloc (ke_msg header + 12 bytes).
  */
-typedef void (*r_hci_send_2_host_hack_fn_t)(void *);
+typedef void (*r_hci_send_2_host_hack_fn_t)(void *param);
 
 /**
  * r_hci_bt_acl_bdaddr_register_hack, slot 93 of the IP functions table.
