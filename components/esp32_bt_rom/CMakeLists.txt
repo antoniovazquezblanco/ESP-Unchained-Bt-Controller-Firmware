@@ -3,6 +3,7 @@
 
 idf_component_register(SRCS "esp32_bt_rom.c"
                        INCLUDE_DIRS "include"
+                       REQUIRES bt_protocols
                        REQUIRED_IDF_TARGETS esp32)
 
 target_linker_script(${COMPONENT_LIB} INTERFACE "esp32_bt_rom.ld")
