@@ -11,6 +11,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "hci_desc_tabs.h"
 #include "ld_env.h"
 #include "r_ip_funcs.h"
 #include "r_modules_funcs.h"

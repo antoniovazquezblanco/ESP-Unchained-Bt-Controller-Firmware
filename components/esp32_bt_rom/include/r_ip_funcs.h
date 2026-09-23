@@ -12,6 +12,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "hci_desc_tabs.h"
+
 /**
  * Signature of r_bt_util_buf_init, slot 0 of the IP functions table.
  * It (re)initialises the controller's exchange-memory buffer pools, tearing
@@ -539,25 +541,25 @@ typedef int16_t (*r_hci_fc_check_host_available_nb_sync_packets_fn_t)(void);
  * r_hci_look_for_cmd_desc_hack, slot 85 of the IP functions table.
  * HCI: look for command desc (Espressif override).
  */
-typedef uint16_t *(*r_hci_look_for_cmd_desc_hack_fn_t)(uint16_t);
+typedef hci_cmd_desc_t *(*r_hci_look_for_cmd_desc_hack_fn_t)(uint16_t);
 
 /**
  * r_hci_look_for_evt_desc, slot 86 of the IP functions table.
  * HCI: look for event desc.
  */
-typedef uint8_t *(*r_hci_look_for_evt_desc_fn_t)(uint8_t);
+typedef hci_evt_desc_t *(*r_hci_look_for_evt_desc_fn_t)(uint8_t);
 
 /**
  * patch_hci_look_for_dbg_evt_desc, slot 87 of the IP functions table.
  * HCI: look for debug event desc (Espressif override).
  */
-typedef uint8_t *(*r_patch_hci_look_for_dbg_evt_desc_fn_t)(uint8_t);
+typedef hci_evt_desc_t *(*r_patch_hci_look_for_dbg_evt_desc_fn_t)(uint8_t);
 
 /**
  * r_hci_look_for_le_evt_desc, slot 88 of the IP functions table.
  * HCI: look for LE event desc.
  */
-typedef uint8_t *(*r_hci_look_for_le_evt_desc_fn_t)(uint8_t);
+typedef hci_evt_desc_t *(*r_hci_look_for_le_evt_desc_fn_t)(uint8_t);
 
 /**
  * r_hci_init_hack, slot 89 of the IP functions table.
