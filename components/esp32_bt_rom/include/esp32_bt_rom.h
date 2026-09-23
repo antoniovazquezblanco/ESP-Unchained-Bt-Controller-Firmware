@@ -14,6 +14,14 @@
 #include "r_ip_funcs.h"
 #include "r_modules_funcs.h"
 
+/*
+ * ke_msg id the ROM uses to allocate an HCI Command Complete event. Pass it to
+ * ke_msg_alloc() with src_id = the command opcode, fill byte [0] = status followed
+ * by the return parameters, then hand the buffer to hci_send_2_host(). Seen in
+ * hci_rd_local_ver_info_cmd_handler and hci_dbg_set_bd_addr_cmd_handler.
+ */
+#define HCI_CC_EVT_KE_ID 0x801
+
 /**
  * Local controller Bluetooth SIG Company Identifier (CompId), default 0x0060.
  *
