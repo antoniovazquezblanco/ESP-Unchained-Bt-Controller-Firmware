@@ -33,4 +33,5 @@ ESP-IDF firmware that turns an Espressif chip into a Bluetooth HCI controller re
 
 * [Usage](doc/usage.md) - Flash a prebuilt release and locate the controller's serial port.
 * [Usage on Linux (BlueZ)](doc/usage_linux_bluez.md) - Attach the controller to BlueZ as an `hciX` adapter in Linux.
+* [Usage with Scapy (usbbluetooth)](doc/usage_scapy_usbbluetooth.md) - Drive the controller from Python/Scapy on any OS.
 * [Building](doc/building.md) - Build and flash from source with ESP-IDF.

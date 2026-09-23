@@ -49,3 +49,4 @@ Here are some hints on how to locate your device on different operative systems:
 ## Next steps
 
 - **Linux**: attach the controller to BlueZ, see [Usage on Linux (BlueZ)](usage_linux_bluez.md).
+- **Any OS**: drive the controller from Python/Scapy, see [Usage with Scapy (usbbluetooth)](usage_scapy_usbbluetooth.md).
