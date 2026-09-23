@@ -49,9 +49,13 @@ _Static_assert(sizeof(bd_addr_t) == HCI_BD_ADDR_LEN, "bd_addr_t must be exactly 
 #define HCI_OGF_LE_CTRL 0x08
 #define HCI_OGF_VENDOR 0x3F
 
+/* Event codes (Vol 4, Part E 7.7). */
+#define HCI_EVT_VENDOR_SPECIFIC 0xFF
+
 /* Command status / error codes (Vol 1, Part F). */
 #define HCI_SUCCESS 0x00
 #define HCI_ERR_UNKNOWN_HCI_CMD 0x01
+#define HCI_ERR_UNSUPPORTED_FEATURE 0x11
 #define HCI_ERR_INVALID_PARAMS 0x12
 
 #endif /* HCI_H */
