@@ -21,7 +21,7 @@ endif()
 # Requires
 # Cannot be gated on CONFIG_*
 set(requires
-    bt nvs_flash esp_app_format                     # Core
+    bt_protocols bt nvs_flash esp_app_format        # Core
     esp_driver_uart esp_driver_usb_serial_jtag      # HCI transport
     esp_lcd esp_driver_spi esp_driver_gpio)         # UI / Display
 

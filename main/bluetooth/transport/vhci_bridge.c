@@ -16,13 +16,9 @@
 #include "freertos/stream_buffer.h"
 #include "freertos/task.h"
 
-static const char *TAG = "VHCI";
+#include "hci.h"
 
-/* H4 packet-type indicators. */
-#define HCI_CMD 0x01
-#define HCI_ACL 0x02
-#define HCI_SCO 0x03
-#define HCI_ISO 0x05
+static const char *TAG = "VHCI";
 
 /* Largest payload reassembled from the host. An HCI command tops out at 255 and
  * LE ACL data is far smaller, so this is headroom, not a real limit. A length
@@ -91,14 +87,14 @@ static size_t h4_header_len(uint8_t type)
 {
     switch (type)
     {
-    case HCI_CMD:
-        return 3; /* opcode(2) + plen(1)            */
-    case HCI_ACL:
-        return 4; /* handle(2) + len(2, LE)         */
-    case HCI_SCO:
-        return 3; /* handle(2) + len(1)             */
-    case HCI_ISO:
-        return 4; /* handle(2) + len(2, LE, 14 bit) */
+    case HCI_PKT_CMD:
+        return HCI_CMD_HDR_SIZE;
+    case HCI_PKT_ACL:
+        return HCI_ACL_HDR_SIZE;
+    case HCI_PKT_SCO:
+        return HCI_SCO_HDR_SIZE;
+    case HCI_PKT_ISO:
+        return HCI_ISO_HDR_SIZE;
     default:
         return 0;
     }
@@ -108,14 +104,14 @@ static size_t h4_payload_len(uint8_t type, const uint8_t *hdr)
 {
     switch (type)
     {
-    case HCI_CMD:
+    case HCI_PKT_CMD:
         return hdr[2];
-    case HCI_SCO:
+    case HCI_PKT_SCO:
         return hdr[2];
-    case HCI_ACL:
+    case HCI_PKT_ACL:
         return (size_t)hdr[2] | ((size_t)hdr[3] << 8);
-    case HCI_ISO:
-        return ((size_t)hdr[2] | ((size_t)hdr[3] << 8)) & 0x3FFF;
+    case HCI_PKT_ISO:
+        return ((size_t)hdr[2] | ((size_t)hdr[3] << 8)) & HCI_ISO_LEN_MASK;
     default:
         return 0;
     }
