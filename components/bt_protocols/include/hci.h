@@ -24,6 +24,13 @@
 
 #define HCI_BD_ADDR_LEN 6
 
+/** A Bluetooth device address, little endian as it travels on HCI. */
+typedef struct
+{
+    uint8_t addr[HCI_BD_ADDR_LEN];
+} bd_addr_t;
+_Static_assert(sizeof(bd_addr_t) == HCI_BD_ADDR_LEN, "bd_addr_t must be exactly BD_ADDR sized");
+
 /* The top two bits of an ISO length are reserved. */
 #define HCI_ISO_LEN_MASK 0x3FFF
 
