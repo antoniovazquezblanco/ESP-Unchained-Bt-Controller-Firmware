@@ -26,6 +26,8 @@
 #include "esp_log.h"
 #include "sdkconfig.h"
 
+#include "esp32c3_bt_rom.h"
+
 static const char *TAG = "UNCHAINED";
 
 #if defined(__has_include) && __has_include("esp_bt_vs.h")
@@ -50,6 +52,9 @@ void bt_unchained_init(void)
     chanSel_stack_enableSetCsaVsCmd(true);       /* 0xFD12 ENABLE_CSA2 */
     esp_ble_internalTestFeaturesEnable(true);    /* 0xFD13 CFG_TEST_RELATED */
     ESP_LOGI(TAG, "vendor-specific HCI commands enabled");
+
+    ESP_LOGI(TAG, "esp32c3_bt_rom selftest: %s",
+             esp32c3_bt_rom_selftest() ? "ok" : "FAILED");
 }
 
 #else /* ESP-IDF too old to expose the VS enable API */

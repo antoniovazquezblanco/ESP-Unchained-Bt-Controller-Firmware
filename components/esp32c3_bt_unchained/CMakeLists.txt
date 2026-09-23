@@ -3,5 +3,5 @@
 
 idf_component_register(SRCS "esp32c3_bt_unchained.c"
                        INCLUDE_DIRS "include"
-                       PRIV_REQUIRES bt
+                       PRIV_REQUIRES bt esp32c3_bt_rom
                        REQUIRED_IDF_TARGETS esp32c3)
