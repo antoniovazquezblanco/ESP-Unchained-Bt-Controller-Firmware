@@ -3,11 +3,11 @@
 ## What this is
 
 The firmware turns the board into a **bare Bluetooth HCI controller** that speaks the standard **HCI** transport.
-There is no on-chip host stack meaning that to the computer it is simply another Bluetooth controller.
+There is no on-chip host stack, so to the computer it is simply another Bluetooth controller.
 
-The advantages is that this Bluetooth controller has some vendor commands that allow us to do things such as changing the MAC address of the device.
+The advantage is that this Bluetooth controller exposes vendor commands that let you do things a stock controller will not, such as changing the MAC address of the device.
 
-This means that you will be able to use this as any other serial Bluetooth controller in your machine.
+You can use it like any other serial Bluetooth controller on your machine.
 
 ## Flashing the firmware
 
@@ -34,7 +34,7 @@ The serial port is detected automatically. If several serial devices are connect
 
 Once flashed, the board shows up on your computer as a serial (UART) port.
 
-The exact device name cannot be always set.
+The exact device name is not fixed.
 It depends on the board and its USB-to-UART interface and on your operating system.
 Different boards may enumerate differently, so don't assume a particular name.
 
@@ -45,3 +45,7 @@ Here are some hints on how to locate your device on different operative systems:
 - **Linux**: Device will commonly show up under `/dev/ttyACM*` or `/dev/ttyUSB*`. You may use the command `ls -1 /dev/ttyACM* /dev/ttyUSB*` to list all ports.
 - **Windows**: Look in the `Device Manager`, under `Ports (COM & LPT)` for a new `COMx` entry.
 - **macOS**: Device will commonly show up under `/dev/cu.usbmodem*` or `/dev/cu.usbserial-*`. You may use the command `ls -1 /dev/cu.*` to list all ports.
+
+## Next steps
+
+- **Linux**: attach the controller to BlueZ, see [Usage on Linux (BlueZ)](usage_linux_bluez.md).
