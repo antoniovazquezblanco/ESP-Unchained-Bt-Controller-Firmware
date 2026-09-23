@@ -150,15 +150,46 @@ typedef void (*r_LM_MakeRandVec_fn_t)(int32_t);
 
 /**
  * r_lmp_pack, slot 20 of the IP functions table.
- * LMP: pack.
+ *
+ * Serialises a BR/EDR LMP PDU from its unpacked struct into the on-air byte
+ * layout, driven by the per-opcode format string in lmp_desc_tab /
+ * lmp_ext_desc_tab (opcode 0x7F escapes to the extended table). The TX side of
+ * the lmp_pack/lmp_unpack pair.
+ *
+ * Reversing (r_lmp_pack @ 0x4001135c): looks the opcode up (in[0] >> 1, or in[1]
+ * for extended), then walks the format string emitting H (16-bit), L (32-bit)
+ * and B (byte / array) fields little-endian. Writes the packed byte count back
+ * to *out_len and returns 0 on success, 4 for an unknown opcode. Callers are
+ * lc_send_lmp and lb_send_lmp -- the step that runs just before the packed PDU
+ * reaches ld_acl_lmp_tx, which is where we already tap outgoing LMP.
+ *
+ * @param in      unpacked LMP PDU (opcode byte first).
+ * @param out_len [out] number of packed bytes written.
+ * @return 0 on success, 4 for an unknown opcode.
  */
-typedef int32_t (*r_lmp_pack_fn_t)(uint8_t *, uint8_t *);
+typedef int32_t (*r_lmp_pack_fn_t)(uint8_t *in, uint8_t *out_len);
 
 /**
  * r_lmp_unpack, slot 21 of the IP functions table.
- * LMP: unpack.
+ *
+ * Parses a received BR/EDR LMP PDU from its on-air bytes into the unpacked
+ * struct, the inverse of lmp_pack and the same per-opcode format tables. This is
+ * the clean incoming-LMP tap: its ONLY caller is lc_lmp_rx_ind_handler, so every
+ * received LMP PDU passes through slot 21 exactly once.
+ *
+ * Reversing (r_lmp_unpack @ 0x4001149c): looks the opcode up (in[0] >> 1, or
+ * in[1] extended), clamps *len to the descriptor's length, unpacks per the
+ * format string, and on success writes the unpacked length back to *len and
+ * returns 0 (2 = malformed, 3 = length mismatch, 4 = unknown opcode). To capture
+ * the wire PDU from a hook, read `in` -- its length is the descriptor length for
+ * that opcode (lmp_desc_tab[i].len), or *len on the way out.
+ *
+ * @param out unpacked-struct output buffer.
+ * @param in  received LMP PDU (opcode byte first).
+ * @param len [in] bytes available; [out] unpacked length on success.
+ * @return 0 on success; 2/3/4 on malformed / length-mismatch / unknown opcode.
  */
-typedef uint8_t (*r_lmp_unpack_fn_t)(uint8_t *, uint8_t *, uint8_t *);
+typedef uint8_t (*r_lmp_unpack_fn_t)(uint8_t *out, uint8_t *in, uint8_t *len);
 
 /**
  * r_lm_n_is_zero, slot 22 of the IP functions table.
@@ -3668,9 +3699,25 @@ typedef void (*r_lld_pdu_tx_loop_fn_t)(int32_t);
 
 /**
  * r_lld_pdu_data_tx_push, slot 596 of the IP functions table.
- * Lower Link Driver (LE baseband): PDU data TX push.
+ *
+ * Programs one outgoing BLE LL data/control PDU into a TX descriptor in exchange
+ * memory and queues it on the connection's TX list -- the BLE analogue of
+ * ld_acl_lmp_tx, and the candidate tap for outgoing-LL capture (the reserved
+ * LMP_MONITOR_LL_TX bit).
+ *
+ * Reversing (r_lld_pdu_data_tx_push @ 0x4004aecc, not yet on-chip validated):
+ * param_1 is the connection's lld env; tx_desc is a TX descriptor element whose
+ * fields feed the EM TX-descriptor ring (DAT_3ffb05c0..): +4 buffer index, +6
+ * data pointer, +8 length, +0xb LLID/flags (low 2 bits LLID). It writes those
+ * into the ring under a global interrupt lock and co_list_push_backs the element.
+ * The PDU bytes live in EM; resolving them needs the buffer-index -> EM-offset
+ * map, still to be pinned on-chip.
+ *
+ * @param lld_env  the connection's lower-link-driver env.
+ * @param tx_desc  the TX descriptor element to push.
+ * @param prog     non-zero to also mark it for immediate programming.
  */
-typedef void (*r_lld_pdu_data_tx_push_fn_t)(int32_t, int32_t, uint8_t);
+typedef void (*r_lld_pdu_data_tx_push_fn_t)(int32_t lld_env, int32_t tx_desc, uint8_t prog);
 
 /**
  * r_lld_pdu_data_send, slot 597 of the IP functions table.
@@ -3710,9 +3757,25 @@ typedef uint32_t (*r_lld_pdu_adv_pack_fn_t)(uint32_t, uint32_t *, uint8_t *);
 
 /**
  * r_lld_pdu_rx_handler, slot 603 of the IP functions table.
- * Lower Link Driver (LE baseband): PDU RX handler.
+ *
+ * Drains the BLE baseband RX descriptor ring after a connection event: for each
+ * of `nb_rx` received PDUs it reads the EM RX descriptor, routes LL data up to
+ * the host (ACL) and LL control PDUs (LLID 3) to the link controller. The
+ * candidate tap for incoming-LL capture.
+ *
+ * Reversing (r_lld_pdu_rx_handler @ 0x4004b4d4, not yet on-chip validated): it
+ * already contains the controller's own LLCP-to-host trace -- when the
+ * per-connection debug flag (llc_env[conn]+0xb6) is set it allocates a debug
+ * event (ke id 0x80d), copies the received LLCP PDU out of EM, and sends it via
+ * hci_send_2_host_hack. So incoming LL control PDUs can be surfaced either by
+ * hooking this slot or by setting that flag; LL *data* PDUs would still need the
+ * hook. The RX PDU bytes are at EM DAT_3ffb0950[buf_idx*6]; the exact offsets
+ * want an on-chip pass before we build on them.
+ *
+ * @param lld_env the connection's lower-link-driver env.
+ * @param nb_rx   number of received PDUs to process this event.
  */
-typedef void (*r_lld_pdu_rx_handler_fn_t)(int32_t, uint8_t);
+typedef void (*r_lld_pdu_rx_handler_fn_t)(int32_t lld_env, uint8_t nb_rx);
 
 /**
  * r_lld_util_instant_get, slot 604 of the IP functions table.
