@@ -647,9 +647,16 @@ typedef uint8_t (*r_hci_cmd_get_max_param_size_fn_t)(uint16_t);
 
 /**
  * r_hci_cmd_received, slot 102 of the IP functions table.
- * HCI: command received.
+ * The controller's entry point for a host HCI command. It looks up the command
+ * descriptor (via hci_look_for_cmd_desc_hack), unpacks the parameters into a
+ * kernel message and routes it to the owning task, which runs the actual handler;
+ * an unregistered opcode is answered with "Unknown HCI Command".
+ *
+ * @param opcode  16-bit HCI opcode (OGF << 10 | OCF).
+ * @param length  number of parameter bytes at payload.
+ * @param payload the command's raw parameter bytes (length bytes).
  */
-typedef void (*r_hci_cmd_received_fn_t)(uint32_t, uint8_t, uint16_t *);
+typedef void (*r_hci_cmd_received_fn_t)(uint16_t opcode, uint8_t length, uint8_t *payload);
 
 /**
  * r_hci_acl_tx_data_alloc, slot 103 of the IP functions table.
@@ -3977,15 +3984,25 @@ typedef uint32_t (*r_llm_util_check_map_validity_fn_t)(uint8_t *, uint32_t);
 
 /**
  * r_llm_util_apply_bd_addr, slot 657 of the IP functions table.
- * Lower Link Manager (LE): util apply Bluetooth device address.
+ * Programs one of the controller's stored device addresses into the link-layer
+ * hardware (via lld_util_set_bd_address). The ROM calls it during init; call it
+ * again after overwriting a stored address for the change to take effect on air.
+ *
+ * @param addr_type which stored address to apply: 0 = public (llm_local_pub_addr),
+ *                  1 or 3 = random.
  */
-typedef void (*r_llm_util_apply_bd_addr_fn_t)(uint8_t);
+typedef void (*r_llm_util_apply_bd_addr_fn_t)(uint8_t addr_type);
 
 /**
  * r_llm_util_set_public_addr, slot 658 of the IP functions table.
- * Lower Link Manager (LE): util set public address.
+ * Copies a 6-byte BD address into the controller's stored public address
+ * (llm_local_pub_addr). It only updates the stored value -- it does NOT reprogram
+ * the radio; call llm_util_apply_bd_addr(0) afterwards for the new address to take
+ * effect on air. This is the mechanism the ROM's dbg "set BD address" uses.
+ *
+ * @param bd_addr pointer to the 6 address bytes (LSB first).
  */
-typedef void (*r_llm_util_set_public_addr_fn_t)(void *);
+typedef void (*r_llm_util_set_public_addr_fn_t)(const uint8_t *bd_addr);
 
 /**
  * r_llm_util_check_evt_mask, slot 659 of the IP functions table.
