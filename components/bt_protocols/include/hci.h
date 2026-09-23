@@ -22,6 +22,8 @@
 #define HCI_SCO_HDR_SIZE 3 /* handle(2) + len(1)         */
 #define HCI_ISO_HDR_SIZE 4 /* handle(2) + len(2, 14 bit) */
 
+#define HCI_BD_ADDR_LEN 6
+
 /* The top two bits of an ISO length are reserved. */
 #define HCI_ISO_LEN_MASK 0x3FFF
 
