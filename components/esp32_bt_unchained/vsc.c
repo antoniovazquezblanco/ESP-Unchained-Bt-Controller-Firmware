@@ -58,6 +58,46 @@ static const vs_cmd_t s_vs_cmds[] = {
     {UNCHAINED_VS_SET_BDADDR_OPCODE, vs_set_bdaddr},
 };
 
+/*
+ * Reply packing. Building a Command Complete, the ROM (hci_tx_start, ke_msg
+ * 0x801) looks the opcode up with hci_look_for_cmd_desc_hack and, when that
+ * returns NULL, overwrites the first return byte -- our status -- with 0x01
+ * "Unknown HCI Command". Espressif's lookup rejects every vendor opcode <=
+ * 0xFC80 before it even searches, which is all of ours, so we hand it a
+ * descriptor of our own. It only reads the flags and the pack function off the
+ * descriptor on that path, so one shared entry serves every command in
+ * s_vs_cmds.
+ */
+/* The return parameters are already laid out by the handler, so packing is a
+ * no-op: the ROM passes one buffer as both out and in and keeps the length we
+ * allocated. Zero tells it the pack succeeded. */
+static uint16_t vs_pack_in_place(uint8_t *out, uint8_t *in, uint16_t *out_len, uint16_t in_len)
+{
+    return 0;
+}
+
+static const hci_cmd_desc_t s_vs_cmd_desc = {
+    .opcode = 0, /* never read back: the ROM already knows the opcode */
+    /* No routing bits: the command never reaches the ROM's dispatch, we answer
+     * it first. Only the flag saying ret_par_fmt is a function matters. */
+    .dest_field = HCI_CMD_DEST_SPEC_RET_PK_MSK,
+    /* hci_cmd_get_max_param_size() reads this to bound an incoming command and
+     * answers 0xFF when there is no descriptor, so anything smaller would make
+     * the hook itself start dropping commands that carry parameters. */
+    .par_size_max = 0xFF,
+    .par_fmt = NULL,
+    .ret_par_fmt = vs_pack_in_place,
+};
+
+hci_cmd_desc_t *vsc_cmd_desc(uint16_t opcode)
+{
+    for (size_t i = 0; i < sizeof(s_vs_cmds) / sizeof(s_vs_cmds[0]); i++)
+        if (s_vs_cmds[i].opcode == opcode)
+            return (hci_cmd_desc_t *)&s_vs_cmd_desc;
+
+    return NULL;
+}
+
 /* 0xFC00 INFO: firmware name, firmware version and board name, each prefixed by
  * a one-byte length. */
 static void vs_info(uint16_t opcode, uint8_t length, const uint8_t *payload)

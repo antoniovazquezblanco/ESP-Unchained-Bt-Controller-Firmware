@@ -10,6 +10,7 @@
 
 #include <stdint.h>
 
+#include "esp32_bt_rom.h"
 #include "hci.h"
 
 /*
@@ -48,6 +49,12 @@
  */
 #define UNCHAINED_VS_SET_BDADDR_OCF 0x002
 #define UNCHAINED_VS_SET_BDADDR_OPCODE HCI_OPCODE(HCI_OGF_VENDOR, UNCHAINED_VS_SET_BDADDR_OCF) /* 0xFC02 */
+
+/*
+ * The command descriptor the ROM needs to pack a Command Complete for one of our
+ * opcodes; NULL for anything we do not implement.
+ */
+hci_cmd_desc_t *vsc_cmd_desc(uint16_t opcode);
 
 /* Handle one vendor-group command. Mirrors the ROM hci_cmd_received signature. */
 void vsc_cmd_received(uint16_t opcode, uint8_t length, uint8_t *payload);
