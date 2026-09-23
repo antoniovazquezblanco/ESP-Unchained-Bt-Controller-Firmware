@@ -12,6 +12,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "hci.h"
 #include "hci_desc_tabs.h"
 
 /**
@@ -461,9 +462,23 @@ typedef int32_t (*r_em_buf_rx_buff_addr_get_fn_t)(uint32_t);
 
 /**
  * r_em_buf_tx_buff_addr_get, slot 72 of the IP functions table.
- * Exchange memory: buffer TX buff address get.
+ *
+ * Resolves a TX buffer element to the CPU address of its payload in exchange
+ * memory (EM). The controller and the baseband hardware share EM, which the CPU
+ * sees based at 0x3ffb0000; buffer elements carry a 16-bit EM offset rather than
+ * a CPU pointer, and this converts one to the other.
+ *
+ * Reversing: the ROM (r_em_buf_tx_buff_addr_get @ 0x40017404) is simply
+ *     return (uint8_t *)0x3ffb0000 + *(uint16_t *)(buf_elt + 4);
+ * i.e. it reads the element's EM-offset field (at +4) and adds the EM base. Used
+ * by the LMP/ACL TX paths (and by us, to read an outgoing LMP PDU at its
+ * ld_acl_lmp_tx submit time without hardcoding the EM base).
+ *
+ * @param buf_elt a TX buffer element (e.g. the bt_em_lmp_buf_elt handed to
+ *                ld_acl_lmp_tx); its +4 field is the payload's EM offset.
+ * @return CPU address of the payload bytes in exchange memory.
  */
-typedef int32_t (*r_em_buf_tx_buff_addr_get_fn_t)(int32_t);
+typedef uint8_t *(*r_em_buf_tx_buff_addr_get_fn_t)(int32_t buf_elt);
 
 /**
  * r_em_buf_tx_free, slot 73 of the IP functions table.
@@ -2060,9 +2075,31 @@ typedef uint32_t (*r_ld_acl_data_flush_fn_t)(uint32_t, uint8_t *, uint8_t);
 
 /**
  * r_ld_acl_lmp_tx, slot 336 of the IP functions table.
- * Link Driver (baseband): ACL lmp TX.
+ *
+ * Submits one outgoing LMP PDU on a BR/EDR ACL link -- the single point every
+ * controller-originated LMP PDU passes through on its way to the air, which makes
+ * it the tap point for outgoing-LMP capture.
+ *
+ * Reversing (r_ld_acl_lmp_tx @ 0x40035b34): link_id (low byte) indexes the link
+ * driver env table ld_acl_env[]; a null slot means the link is gone and it
+ * returns 0xC without sending. buf_elt is a bt_em_lmp_buf_elt whose payload lives
+ * in exchange memory:
+ *
+ *     buf_elt + 4  uint16  EM offset of the LMP PDU bytes (resolve with
+ *                          em_buf_tx_buff_addr_get)
+ *     buf_elt + 6  uint8   PDU length
+ *
+ * When the link can send immediately it writes the TX descriptor and toggles the
+ * TX sequencing bits; otherwise it queues the element on the link's LMP TX list.
+ * The body runs under a global interrupt lock (plf_funcs slot 8 / 0xc bracket).
+ * PDU byte 0 is [opcode<<1 | TID]; opcode 0x7F (0xFE on the wire) escapes to a
+ * one-byte extended opcode in byte 1.
+ *
+ * @param link_id link index (low byte) into ld_acl_env[].
+ * @param buf_elt the LMP buffer element to transmit.
+ * @return 0 on success, 0xC when the link does not exist.
  */
-typedef uint32_t (*r_ld_acl_lmp_tx_fn_t)(uint32_t, int32_t);
+typedef uint32_t (*r_ld_acl_lmp_tx_fn_t)(uint32_t link_id, int32_t buf_elt);
 
 /**
  * r_ld_acl_lmp_flush, slot 337 of the IP functions table.
@@ -2588,7 +2625,18 @@ typedef void (*r_ld_reset_hark_fn_t)(void);
 
 /**
  * r_ld_read_clock, slot 424 of the IP functions table.
- * Link Driver (baseband): read clock.
+ *
+ * Reads the controller's native BR/EDR clock (CLKN): a free-running 28-bit
+ * counter in 312.5 us half-slot ticks, the master time base the baseband
+ * schedules on. Read-only and side-effect free, so it doubles as a safe
+ * liveness self-test, and it is what we timestamp captured PDUs with.
+ *
+ * Reversing (r_ld_read_clock @ 0x4003c9e4): it strobes the clock-latch bit in a
+ * BT core register, spins while the latch-busy (sign) bit is set, then reads the
+ * latched value back as (raw + 1) >> 1 masked to the counter width -- i.e. the
+ * fine counter rounded to the half-slot CLKN value.
+ *
+ * @return the native clock, 28-bit, 312.5 us per tick.
  */
 typedef uint32_t (*r_ld_read_clock_fn_t)(void);
 
@@ -3986,25 +4034,44 @@ typedef uint32_t (*r_llm_util_check_map_validity_fn_t)(uint8_t *, uint32_t);
 
 /**
  * r_llm_util_apply_bd_addr, slot 657 of the IP functions table.
- * Programs one of the controller's stored device addresses into the link-layer
- * hardware (via lld_util_set_bd_address). The ROM calls it during init; call it
- * again after overwriting a stored address for the change to take effect on air.
  *
- * @param addr_type which stored address to apply: 0 = public (llm_local_pub_addr),
- *                  1 or 3 = random.
+ * Programs one of the LE link manager's stored addresses into the link-layer
+ * hardware register, through lld_util_set_bd_address. The ROM calls it during
+ * init; call it again after overwriting a stored address for the change to take
+ * effect on air.
+ *
+ * Reversing: the ROM (r_llm_util_apply_bd_addr @ 0x4004e868) matches the
+ * RivieraWaves source (ip/ble/ll/src/llm/llm_util.c) exactly -- it switches on
+ * addr_type and passes either llm_le_env.rand_add or .public_add to
+ * lld_util_set_bd_address:
+ *
+ *     ADDR_RAND (1) / ADDR_RPA_OR_RAND (3) -> program the random  address
+ *     anything else (0 = ADDR_PUBLIC)      -> program the public  address
+ *
+ * @param addr_type which stored address to apply (see the table above).
  */
 typedef void (*r_llm_util_apply_bd_addr_fn_t)(uint8_t addr_type);
 
 /**
  * r_llm_util_set_public_addr, slot 658 of the IP functions table.
- * Copies a 6-byte BD address into the controller's stored public address
- * (llm_local_pub_addr). It only updates the stored value -- it does NOT reprogram
- * the radio; call llm_util_apply_bd_addr(0) afterwards for the new address to take
- * effect on air. This is the mechanism the ROM's dbg "set BD address" uses.
  *
- * @param bd_addr pointer to the 6 address bytes (LSB first).
+ * Overwrites the LE link manager's stored public address (llm_le_env.public_add,
+ * at 0x3ffb97e5 in this ROM). It only updates the stored value -- it does NOT
+ * reprogram the radio; call llm_util_apply_bd_addr(0) afterwards for the new
+ * address to take effect on air. This is the mechanism the ROM's dbg "set BD
+ * address" command (hci_dbg_set_bd_addr_cmd_handler) uses.
+ *
+ * Note this is only the LE-side copy. BR/EDR reads its public address from the
+ * link driver env instead (see ld_env in ld_env.h), so covering both transports
+ * means writing there as well -- exactly what our SET_BDADDR command does.
+ *
+ * Reversing: the ROM (r_llm_util_set_public_addr @ 0x4004e89c) is a plain
+ * memcpy(&llm_le_env.public_add, bd_addr, BD_ADDR_LEN), matching the source
+ * (ip/ble/ll/src/llm/llm_util.c: void llm_util_set_public_addr(struct bd_addr *)).
+ *
+ * @param bd_addr the address to store (LSB first, as on air and HCI).
  */
-typedef void (*r_llm_util_set_public_addr_fn_t)(const uint8_t *bd_addr);
+typedef void (*r_llm_util_set_public_addr_fn_t)(const bd_addr_t *bd_addr);
 
 /**
  * r_llm_util_check_evt_mask, slot 659 of the IP functions table.

@@ -24,6 +24,15 @@
  */
 #define HCI_CC_EVT_KE_ID 0x801
 
+/*
+ * ke_msg id for an unsolicited HCI event (as opposed to a Command Complete).
+ * Allocate with ke_msg_alloc(HCI_EVT_KE_ID, 0, event_code, param_len), fill the
+ * event parameters, then hand the buffer to hci_send_2_host_hack(). hci_tx_start
+ * packs it into an H4 event frame [code][len][params]. Seen throughout the ROM's
+ * event emitters (e.g. r_llm_end_evt_defer).
+ */
+#define HCI_EVT_KE_ID 0x803
+
 /**
  * Local controller Bluetooth SIG Company Identifier (CompId), default 0x0060.
  *

@@ -303,18 +303,33 @@ typedef uint32_t (*r_ke_get_max_mem_usage_fn_t)(void);
 
 /**
  * r_ke_msg_alloc, slot 48 of the r_modules_funcs table.
- * Allocates a kernel message from the heap: a 12-byte ke_msg header followed by
- * param_len bytes of parameters. Fills the header (list-next sentinel 0xFFFFFFFF,
- * id, dest_id, src_id, param_len) and zero-fills the parameter area. Returns a
- * pointer to that parameter area (header + 12); the send/free helpers recover the
- * header via negative offsets, so hand this pointer to ke_msg_send() or
- * hci_send_2_host() rather than freeing it directly.
+ *
+ * Allocates a kernel message and returns a pointer to its parameter area. The
+ * kernel/scheduler ("ke") is how the RivieraWaves stack passes work between tasks
+ * and out to the host; an HCI event or Command Complete is just a ke_msg the HCI
+ * transport task drains.
+ *
+ * The header layout is the RivieraWaves struct ke_msg (ip/ke/ke_msg.h), 12 bytes
+ * ahead of the returned pointer:
+ *
+ *     +0  co_list_hdr hdr   (4)  chaining next-pointer
+ *     +4  uint16      id         message id (0x801 Command Complete, 0x803 event)
+ *     +6  uint16      dest_id    destination task
+ *     +8  uint16      src_id     source task -- reused as the opcode (Command
+ *                                Complete) or event code (event)
+ *     +10 uint16      param_len  bytes of parameters that follow
+ *     +12 ...         param[]    <-- the returned pointer
+ *
+ * ke_param2msg() recovers the header from the returned pointer via a negative
+ * offset, so hand this pointer to ke_msg_send() / hci_send_2_host() rather than
+ * freeing it directly. This is exactly how we build our vendor replies and
+ * capture events (see HCI_CC_EVT_KE_ID / HCI_EVT_KE_ID in esp32_bt_rom.h).
  *
  * @param id        message id (ke_msg_id_t).
  * @param dest_id   destination task id (ke_task_id_t).
- * @param src_id    source task id (ke_task_id_t).
+ * @param src_id    source task id (ke_task_id_t); the opcode or event code.
  * @param param_len size in bytes of the parameter area to allocate.
- * @return pointer to the zero-filled parameter area (ke_msg header + 12 bytes).
+ * @return pointer to the parameter area (ke_msg header + 12 bytes).
  */
 typedef void *(*r_ke_msg_alloc_fn_t)(uint16_t id, uint16_t dest_id, uint16_t src_id, uint16_t param_len);
 
