@@ -9,23 +9,13 @@
 
 /*
  * Register Espressif's vendor-specific HCI commands/events with the controller.
- * The enablers must run at the point the controller makes its command tables /
- * link-layer envs writable, and that point differs by chip -- so this is split
- * into two hooks the controller bring-up calls at the right moments:
+ * Call after esp_bt_controller_enable(): the envs the enablers write into are
+ * allocated by init()/enable().
  *
- *   vsc_enable_pre()   between esp_bt_controller_init() and _enable().
- *                      The classic ESP32 registers here: its enablers write the
- *                      external-HCI command-descriptor table, which is frozen at
- *                      enable(), so calling before enable() is what makes its
- *                      AFH / TX-power VS blocks reachable.
- *   vsc_enable_post()  after esp_bt_controller_enable().
- *                      The C3/C5 register here: the envs their enablers write into
- *                      are allocated by init()/enable().
- *
- * Each is a no-op on chips that don't use that phase. No-op with a warning on an
- * ESP-IDF too old to expose the enable API.
+ * Not for the classic ESP32, which runs esp32_bt_unchained and serves its own
+ * vendor command set instead. No-op with a warning on a chip without a verified
+ * enable API, or on an ESP-IDF too old to expose it.
  */
-void vsc_enable_pre(void);
-void vsc_enable_post(void);
+void vsc_enable(void);
 
 #endif /* VSC_H */

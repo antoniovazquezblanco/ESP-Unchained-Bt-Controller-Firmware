@@ -9,4 +9,12 @@
 #ifndef ESP32_BT_UNCHAINED_H
 #define ESP32_BT_UNCHAINED_H
 
+/*
+ * Initialise the patch layer (ESP32 only). Call once, after
+ * esp_bt_controller_enable().
+ * This sets an identifiable company id and routes the whole vendor command
+ * group (OGF 0x3F) to our own set, defined in vsc.h.
+ */
+void esp32_bt_unchained_init(void);
+
 #endif /* ESP32_BT_UNCHAINED_H */

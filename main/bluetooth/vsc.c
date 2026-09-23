@@ -4,19 +4,19 @@
  *
  * Espressif vendor-specific (OGF 0x3F) HCI command enablement.
  *
- * The precompiled controller (libble_app.a / libbtdm_app.a) registers its
- * vendor-specific commands only when the matching enable function is called.
- * ESP-IDF wraps those calls in `#ifdef CONFIG_BT_BLUEDROID_ENABLED /
- * CONFIG_BT_NIMBLE_ENABLED`, so a controller-only build leaves the whole VS set
- * dormant (every 0x3F opcode answers 0x01 "Unknown HCI Command"). We call them
- * ourselves. Every symbol was verified with `nm` over each chip's controller
- * library, not from the headers. Requires ESP-IDF v6.0+ (or a VS-enable
- * backport); we feature-detect on esp_bt_vs.h to keep compiling on older IDF.
+ * The precompiled controller (libble_app.a) registers its vendor-specific
+ * commands only when the matching enable function is called. ESP-IDF wraps those
+ * calls in `#ifdef CONFIG_BT_BLUEDROID_ENABLED / CONFIG_BT_NIMBLE_ENABLED`, so a
+ * controller-only build leaves the whole VS set dormant (every 0x3F opcode
+ * answers 0x01 "Unknown HCI Command"). We call them ourselves. Every symbol was
+ * verified with `nm` over each chip's controller library, not from the headers.
+ * Requires ESP-IDF v6.0+ (or a VS-enable backport); we feature-detect on
+ * esp_bt_vs.h to keep compiling on older IDF.
  *
- * The enablers run in one of two phases -- vsc_enable_pre() (before
- * esp_bt_controller_enable()) or vsc_enable_post() (after) -- because the point
- * at which each chip accepts them differs. See vsc.h. Background and the live
- * results are in vendors/espressif/esp-hci-uart-vsc-enablement.md.
+ * The classic ESP32 is deliberately absent: it runs esp32_bt_unchained, which
+ * takes over the whole vendor group with our own command set, so the stock
+ * commands would be unreachable there anyway. Background and the live results
+ * are in vendors/espressif/esp-hci-uart-vsc-enablement.md.
  */
 #include <stdbool.h>
 
@@ -36,60 +36,14 @@ static const char *TAG = "VSC";
  * while the enabler stays uncalled -- --gc-sections drops it -- and breaks with a
  * wall of undefined references the moment it is called. */
 #if defined(__has_include) && __has_include("esp_bt_vs.h")
-#  if defined(CONFIG_IDF_TARGET_ESP32)
-#    define VSC_SYMBOLS_ESP32 1
-#  elif defined(CONFIG_IDF_TARGET_ESP32C5)
+#  if defined(CONFIG_IDF_TARGET_ESP32C5)
 #    define VSC_SYMBOLS_C5 1
 #  elif defined(CONFIG_IDF_TARGET_ESP32C3)
 #    define VSC_SYMBOLS_C3 1
 #  endif
 #endif
 
-#ifdef VSC_SYMBOLS_ESP32
-/* Classic ESP32, dual mode (libbtdm_app.a). Its enablers register into the
- * external-HCI command-descriptor table, built during controller init and frozen
- * at enable(), so they go in vsc_enable_pre() -- BEFORE enable(). That ordering
- * is what makes the classic-BT AFH / TX-power blocks (0xFD81-0xFD99) reachable:
- * 10 -> 23 opcodes over external HCI. (0xFD13 CFG_TEST_RELATED is enabled too but
- * stays internal-host-only by construction, so it never answers on external
- * HCI.) The controller exports no VS *event* enablers. */
-extern void bt_stack_enableEchoVsCmd(bool en);
-extern void bt_stack_enableCoexVsCmd(bool en);
-extern void bt_stack_enableSecCtrlVsCmd(bool en);
-extern void bt_stack_enablePwrCtrlVsCmd(bool en);
-extern void bt_stack_enableAfhVsCmd(bool en);
-extern void bt_stack_enableBasicVsCmd(bool en);
-extern void bt_stack_enableClkCtrlVsCmd(bool en);
-extern void bt_stack_enablePktCtrlVsCmd(bool en);
-extern void bt_stack_enableRateCtrlVsCmd(bool en);
-extern void scan_stack_enableAdvFlowCtrlVsCmd(bool en);
-extern void adv_stack_enableClearLegacyAdvVsCmd(bool en);
-extern void advFilter_stack_enableDupExcListVsCmd(bool en);
-extern void arr_stack_enableMultiConnVsCmd(bool en);
-extern void esp_ble_internalTestFeaturesEnable(bool en);
-
-void vsc_enable_pre(void)
-{
-    bt_stack_enableEchoVsCmd(true);                   /* 0xFC81 ECHO */
-    bt_stack_enableCoexVsCmd(true);                   /* 0xFC82 SET_COEX_STATUS */
-    bt_stack_enableSecCtrlVsCmd(true);                /* 0xFD82 SET_MIN_ENC_KEY_SIZE */
-    bt_stack_enablePwrCtrlVsCmd(true);                /* 0xFD91-0xFD99 RD/WR TX power + RSSI */
-    bt_stack_enableAfhVsCmd(true);                    /* 0xFD87/0xFD89/0xFD8A AFH */
-    bt_stack_enableBasicVsCmd(true);                  /* 0xFD88 SET_EVT_MASK */
-    bt_stack_enableClkCtrlVsCmd(true);                /* 0xFD83 CLK_UPDATE */
-    bt_stack_enablePktCtrlVsCmd(true);                /* 0xFD81 WR_DM1_ENABLE */
-    bt_stack_enableRateCtrlVsCmd(true);               /* 0xFD8B WR_AUTO_RATE_INIT */
-    scan_stack_enableAdvFlowCtrlVsCmd(true);          /* 0xFD09/0xFD0A */
-    adv_stack_enableClearLegacyAdvVsCmd(true);        /* 0xFD0C */
-    advFilter_stack_enableDupExcListVsCmd(true);      /* 0xFD08 */
-    arr_stack_enableMultiConnVsCmd(true);             /* 0xFD0F/0xFD10 */
-    esp_ble_internalTestFeaturesEnable(true);         /* 0xFD13 CFG_TEST_RELATED (internal only) */
-    ESP_LOGI(TAG, "vendor-specific HCI commands enabled");
-}
-
-void vsc_enable_post(void) { }
-
-#elif defined(VSC_SYMBOLS_C5)
+#ifdef VSC_SYMBOLS_C5
 extern void advFilter_stack_enableDupExcListVsCmd(bool en);
 extern void scan_stack_enableAdvFlowCtrlVsCmd(bool en);
 extern void adv_stack_enableClearLegacyAdvVsCmd(bool en);
@@ -115,9 +69,7 @@ extern void adv_stack_enableScanReqRxdVsEvent(bool en);
 extern void conn_stack_enableChanMapUpdCompVsEvent(bool en);
 extern void sleep_stack_enableWakeupVsEvent(bool en);
 
-void vsc_enable_pre(void) { }
-
-void vsc_enable_post(void)
+void vsc_enable(void)
 {
     /* Commands. */
     advFilter_stack_enableDupExcListVsCmd(true);      /* 0xFD08/0xFD0D/0xFD0E */
@@ -164,9 +116,7 @@ extern void adv_stack_enableClearLegacyAdvVsCmd(bool en);
 extern void chanSel_stack_enableSetCsaVsCmd(bool en);
 extern void esp_ble_internalTestFeaturesEnable(bool en);
 
-void vsc_enable_pre(void) { }
-
-void vsc_enable_post(void)
+void vsc_enable(void)
 {
     bt_stack_enableEchoVsCmd(true);                   /* 0xFC81 ECHO */
     advFilter_stack_enableDupExcListVsCmd(true);      /* 0xFD08 CONFIG_DUP_EXC_LIST */
@@ -178,12 +128,10 @@ void vsc_enable_post(void)
 }
 
 #else /* chip without a verified VS enable API, or pre-fix IDF */
-void vsc_enable_pre(void) { }
-
-void vsc_enable_post(void)
+void vsc_enable(void)
 {
-    ESP_LOGW(TAG, "no verified VS enable symbols for this chip (ESP32, ESP32-C5 "
-                  "and ESP32-C3 are covered, on IDF v6.0+); vendor-specific HCI "
+    ESP_LOGW(TAG, "no verified VS enable symbols for this chip (ESP32-C5 and "
+                  "ESP32-C3 are covered, on IDF v6.0+); vendor-specific HCI "
                   "commands left disabled");
 }
 #endif

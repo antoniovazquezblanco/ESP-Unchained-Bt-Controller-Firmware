@@ -12,6 +12,10 @@
 #include "transport/transport.h"
 #include "vsc.h"
 
+#ifdef CONFIG_IDF_TARGET_ESP32
+#include "esp32_bt_unchained.h"
+#endif
+
 static const char *TAG = "BT";
 
 /* Controller mode: dual (BR/EDR + BLE) where the chip and its config ask for it
@@ -43,9 +47,6 @@ esp_err_t bluetooth_init(void)
         return ret;
     }
 
-    /* Vendor-specific (OGF 0x3F) commands that must be registered before enable. */
-    vsc_enable_pre();
-
     ret = esp_bt_controller_enable(BT_MODE);
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "esp_bt_controller_enable failed: %s", esp_err_to_name(ret));
@@ -54,6 +55,11 @@ esp_err_t bluetooth_init(void)
 
     ESP_LOGI(TAG, "HCI controller enabled (mode %d)", (int)BT_MODE);
 
+#ifdef CONFIG_IDF_TARGET_ESP32
+    /* Take over the controller's vendor-command handler with our own VS set. */
+    esp32_bt_unchained_init();
+#endif
+
     // Initialize the HCI transport
     ret = transport_init();
     if (ret != ESP_OK) {
@@ -61,8 +67,11 @@ esp_err_t bluetooth_init(void)
         return ret;
     }
 
-    /* ...and the vendor-specific commands that must be registered after enable. */
-    vsc_enable_post();
+#ifndef CONFIG_IDF_TARGET_ESP32
+    /* Stock Espressif vendor-specific (OGF 0x3F) commands. The ESP32 is excluded:
+     * esp32_bt_unchained already serves that group with our own set. */
+    vsc_enable();
+#endif
 
     return ESP_OK;
 }
