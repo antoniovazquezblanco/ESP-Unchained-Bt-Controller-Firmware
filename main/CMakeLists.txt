@@ -25,12 +25,17 @@ set(requires
     esp_driver_uart esp_driver_usb_serial_jtag      # HCI transport
     esp_lcd esp_driver_spi esp_driver_gpio)         # UI / Display
 
+# Unchained layer: one component per target
 if(IDF_TARGET STREQUAL "esp32")
     list(APPEND requires esp32_bt_unchained)
+elseif(IDF_TARGET STREQUAL "esp32c3")
+    list(APPEND requires esp32c3_bt_unchained)
+elseif(IDF_TARGET STREQUAL "esp32c5")
+    list(APPEND requires esp32c5_bt_unchained)
 endif()
 
 idf_component_register(SRCS "main.c"
-                            "bluetooth/bluetooth.c" "bluetooth/vsc.c"
+                            "bluetooth/bluetooth.c"
                             "bluetooth/transport/transport.c" ${srcs_hci_transport} ${srcs_ui}
                        PRIV_REQUIRES ${requires}
                        INCLUDE_DIRS "." "ui" "bluetooth"

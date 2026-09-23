@@ -4,7 +4,7 @@
  *
  * Patch layer over the ESP32 BR/EDR controller ROM.
  */
-#include "esp32_bt_unchained.h"
+#include "bt_unchained.h"
 
 #include <stddef.h>
 #include <stdint.h>
@@ -30,7 +30,7 @@ static void unchained_hci_cmd_received(uint16_t opcode, uint8_t length, uint8_t 
     s_orig_hci_cmd_received(opcode, length, payload);
 }
 
-void esp32_bt_unchained_init(void)
+void bt_unchained_init(void)
 {
     // Validate that the required function pointers are available
     if (r_ip_funcs_p == NULL || r_modules_funcs_p == NULL) {

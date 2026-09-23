@@ -9,12 +9,8 @@
 #include "esp_log.h"
 #include "esp_bt.h"
 
+#include "bt_unchained.h"
 #include "transport/transport.h"
-#include "vsc.h"
-
-#ifdef CONFIG_IDF_TARGET_ESP32
-#include "esp32_bt_unchained.h"
-#endif
 
 static const char *TAG = "BT";
 
@@ -55,10 +51,8 @@ esp_err_t bluetooth_init(void)
 
     ESP_LOGI(TAG, "HCI controller enabled (mode %d)", (int)BT_MODE);
 
-#ifdef CONFIG_IDF_TARGET_ESP32
-    /* Take over the controller's vendor-command handler with our own VS set. */
-    esp32_bt_unchained_init();
-#endif
+    // Unlock advanced controller behaviour.
+    bt_unchained_init();
 
     // Initialize the HCI transport
     ret = transport_init();
@@ -66,12 +60,6 @@ esp_err_t bluetooth_init(void)
         ESP_LOGE(TAG, "bluetooth_transport_init failed: %s", esp_err_to_name(ret));
         return ret;
     }
-
-#ifndef CONFIG_IDF_TARGET_ESP32
-    /* Stock Espressif vendor-specific (OGF 0x3F) commands. The ESP32 is excluded:
-     * esp32_bt_unchained already serves that group with our own set. */
-    vsc_enable();
-#endif
 
     return ESP_OK;
 }
