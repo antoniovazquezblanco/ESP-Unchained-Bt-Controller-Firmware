@@ -154,7 +154,7 @@ static void vs_supported_cmds(uint16_t opcode, uint8_t length, const uint8_t *pa
 /* 0xFC02 SET_BDADDR: set the controller public address from the 6-byte payload. */
 static void vs_set_bdaddr(uint16_t opcode, uint8_t length, const uint8_t *payload)
 {
-    if (length < HCI_BD_ADDR_LEN)
+    if (length < BD_ADDR_LEN)
     {
         vs_cmd_complete_status(opcode, HCI_ERR_INVALID_PARAMS);
         return;
@@ -164,7 +164,7 @@ static void vs_set_bdaddr(uint16_t opcode, uint8_t length, const uint8_t *payloa
      * llm_util_* below only reaches the LE copy. */
     memcpy(&ld_env.bd_addr, payload, sizeof(ld_env.bd_addr));
     /* LE: update the stored public address, then program it into the radio. */
-    r_ip_funcs_p->llm_util_set_public_addr(payload);
+    r_ip_funcs_p->llm_util_set_public_addr((const bd_addr_t *)payload);
     r_ip_funcs_p->llm_util_apply_bd_addr(0);
     vs_cmd_complete_status(opcode, HCI_SUCCESS);
 }
