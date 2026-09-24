@@ -17,6 +17,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "sdk_config.h"
+
 /*
  * HCI command descriptor entry (12 bytes). r_hci_look_for_cmd_desc() returns one
  * of these; the lookup matches on the OCF (opcode & 0x3ff).
