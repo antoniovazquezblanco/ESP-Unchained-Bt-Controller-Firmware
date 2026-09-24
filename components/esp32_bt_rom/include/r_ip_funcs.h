@@ -12,6 +12,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "bt_em_buf.h"
 #include "hci.h"
 #include "hci_desc_tabs.h"
 
@@ -505,11 +506,12 @@ typedef int32_t (*r_em_buf_rx_buff_addr_get_fn_t)(uint32_t);
  * by the LMP/ACL TX paths (and by us, to read an outgoing LMP PDU at its
  * ld_acl_lmp_tx submit time without hardcoding the EM base).
  *
- * @param buf_elt a TX buffer element (e.g. the bt_em_lmp_buf_elt handed to
- *                ld_acl_lmp_tx); its +4 field is the payload's EM offset.
+ * @param buf_elt a TX buffer element (e.g. the bt_em_lmp_buf_elt_t handed to
+ *                ld_acl_lmp_tx); its buf_ptr field is the payload's EM offset.
+ *                Void, since it serves the LMP/ACL/sync element types alike.
  * @return CPU address of the payload bytes in exchange memory.
  */
-typedef uint8_t *(*r_em_buf_tx_buff_addr_get_fn_t)(int32_t buf_elt);
+typedef uint8_t *(*r_em_buf_tx_buff_addr_get_fn_t)(const void *buf_elt);
 
 /**
  * r_em_buf_tx_free, slot 73 of the IP functions table.
@@ -2130,7 +2132,7 @@ typedef uint32_t (*r_ld_acl_data_flush_fn_t)(uint32_t, uint8_t *, uint8_t);
  * @param buf_elt the LMP buffer element to transmit.
  * @return 0 on success, 0xC when the link does not exist.
  */
-typedef uint32_t (*r_ld_acl_lmp_tx_fn_t)(uint32_t link_id, int32_t buf_elt);
+typedef uint32_t (*r_ld_acl_lmp_tx_fn_t)(uint32_t link_id, bt_em_lmp_buf_elt_t *buf_elt);
 
 /**
  * r_ld_acl_lmp_flush, slot 337 of the IP functions table.
