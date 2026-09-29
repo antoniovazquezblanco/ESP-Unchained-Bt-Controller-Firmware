@@ -51,6 +51,18 @@
 #define UNCHAINED_VS_SET_BDADDR_OPCODE HCI_OPCODE(HCI_OGF_VENDOR, UNCHAINED_VS_SET_BDADDR_OCF) /* 0xFC02 */
 
 /*
+ * SET_TRAFFIC_MONITOR: report low-level link traffic to the host as vendor
+ * events (0xFF), see lmp_monitor.h.
+ *
+ * in:  1-byte flag bitmask (LMP_MONITOR_* in lmp_monitor.h). 0 disables all.
+ * out: status; INVALID_PARAMS if no byte was given, UNSUPPORTED_FEATURE if a
+ *      reserved (not-yet-implemented) flag bit is set.
+ */
+#define UNCHAINED_VS_SET_TRAFFIC_MONITOR_OCF 0x003
+#define UNCHAINED_VS_SET_TRAFFIC_MONITOR_OPCODE \
+    HCI_OPCODE(HCI_OGF_VENDOR, UNCHAINED_VS_SET_TRAFFIC_MONITOR_OCF) /* 0xFC03 */
+
+/*
  * The command descriptor the ROM needs to pack a Command Complete for one of our
  * opcodes; NULL for anything we do not implement.
  */

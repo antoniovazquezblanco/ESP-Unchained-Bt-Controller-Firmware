@@ -13,6 +13,7 @@
 
 #include "esp32_bt_rom.h"
 #include "hci.h"
+#include "lmp_monitor.h"
 
 #ifndef ESP32_BT_UNCHAINED_BOARD
 #define ESP32_BT_UNCHAINED_BOARD "unknown"
@@ -48,6 +49,7 @@ typedef struct
 static void vs_info(uint16_t opcode, uint8_t length, const uint8_t *payload);
 static void vs_supported_cmds(uint16_t opcode, uint8_t length, const uint8_t *payload);
 static void vs_set_bdaddr(uint16_t opcode, uint8_t length, const uint8_t *payload);
+static void vs_set_traffic_monitor(uint16_t opcode, uint8_t length, const uint8_t *payload);
 
 /**
  * The table of vendor-specific commands, mapping opcodes to their handlers.
@@ -56,6 +58,7 @@ static const vs_cmd_t s_vs_cmds[] = {
     {UNCHAINED_VS_INFO_OPCODE, vs_info},
     {UNCHAINED_VS_SUPPORTED_CMDS_OPCODE, vs_supported_cmds},
     {UNCHAINED_VS_SET_BDADDR_OPCODE, vs_set_bdaddr},
+    {UNCHAINED_VS_SET_TRAFFIC_MONITOR_OPCODE, vs_set_traffic_monitor},
 };
 
 /*
@@ -166,6 +169,24 @@ static void vs_set_bdaddr(uint16_t opcode, uint8_t length, const uint8_t *payloa
     /* LE: update the stored public address, then program it into the radio. */
     r_ip_funcs_p->llm_util_set_public_addr((const bd_addr_t *)payload);
     r_ip_funcs_p->llm_util_apply_bd_addr(0);
+    vs_cmd_complete_status(opcode, HCI_SUCCESS);
+}
+
+/* 0xFC03 SET_TRAFFIC_MONITOR: enable/disable low-level PDU reporting (lmp_monitor.h). */
+static void vs_set_traffic_monitor(uint16_t opcode, uint8_t length, const uint8_t *payload)
+{
+    if (length < 1)
+    {
+        vs_cmd_complete_status(opcode, HCI_ERR_INVALID_PARAMS);
+        return;
+    }
+    if ((payload[0] & ~LMP_MONITOR_SUPPORTED) != 0)
+    {
+        /* A flag bit we have no hook for yet -- refuse rather than silently drop it. */
+        vs_cmd_complete_status(opcode, HCI_ERR_UNSUPPORTED_FEATURE);
+        return;
+    }
+    lmp_monitor_set(payload[0]);
     vs_cmd_complete_status(opcode, HCI_SUCCESS);
 }
 
