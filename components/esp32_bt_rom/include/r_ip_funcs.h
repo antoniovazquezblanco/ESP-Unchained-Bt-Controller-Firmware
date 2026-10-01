@@ -182,12 +182,16 @@ typedef int32_t (*r_lmp_pack_fn_t)(uint8_t *in, uint8_t *out_len);
  * in[1] extended), clamps *len to the descriptor's length, unpacks per the
  * format string, and on success writes the unpacked length back to *len and
  * returns 0 (2 = malformed, 3 = length mismatch, 4 = unknown opcode). To capture
- * the wire PDU from a hook, read `in` -- its length is the descriptor length for
- * that opcode (lmp_desc_tab[i].len), or *len on the way out.
+ * the wire PDU from a hook, read `in` for that opcode's descriptor length,
+ * lmp_desc_tab[i].len. Do NOT take the length from *len on the way out: that is
+ * the length of the unpacked struct, which the 2- and 4-byte alignment the H and
+ * L fields get pushes past the PDU for 12 of the 83 opcodes (LMP_set_AFH, for
+ * one, unpacks to 19 bytes from 16 on air).
  *
  * @param out unpacked-struct output buffer.
  * @param in  received LMP PDU (opcode byte first).
- * @param len [in] bytes available; [out] unpacked length on success.
+ * @param len [in] bytes available; [out] unpacked-struct length on success,
+ *            which is >= the on-air length.
  * @return 0 on success; 2/3/4 on malformed / length-mismatch / unknown opcode.
  */
 typedef uint8_t (*r_lmp_unpack_fn_t)(uint8_t *out, uint8_t *in, uint8_t *len);
