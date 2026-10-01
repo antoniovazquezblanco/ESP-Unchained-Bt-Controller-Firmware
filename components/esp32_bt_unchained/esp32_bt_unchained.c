@@ -29,6 +29,9 @@ static r_hci_cmd_received_fn_t s_orig_hci_cmd_received;
 /* The outgoing-LMP handler we replace (slot 336), saved so we can chain it. */
 static r_ld_acl_lmp_tx_fn_t s_orig_ld_acl_lmp_tx;
 
+/* The incoming-LMP unpacker we replace (slot 21), saved so we can chain it. */
+static r_lmp_unpack_fn_t s_orig_lmp_unpack;
+
 /* Our replacement for hci_look_for_cmd_desc_hack. The ROM calls it while packing
  * a Command Complete and stamps status 0x01 over the reply when it comes back
  * empty, so our own commands have to answer with a descriptor. Everything else
@@ -73,6 +76,44 @@ static uint32_t unchained_ld_acl_lmp_tx(uint32_t link_id, bt_em_lmp_buf_elt_t *b
     return s_orig_ld_acl_lmp_tx(link_id, buf_elt);
 }
 
+/* On-air length of a received LMP PDU, opcode byte(s) included; 0 when the opcode
+ * has no descriptor. The same lookup lmp_unpack does, repeated here because the
+ * length it resolves is not one it hands back -- see the hook below. */
+static uint8_t lmp_pdu_len(const uint8_t *pdu)
+{
+    const lmp_desc_t *tab = lmp_desc_tab;
+    size_t count = LMP_DESC_TAB_SIZE;
+    uint8_t opcode = pdu[0] >> 1;
+
+    if (opcode == LMP_OPCODE_ESCAPE) {
+        tab = lmp_ext_desc_tab;
+        count = LMP_EXT_DESC_TAB_SIZE;
+        opcode = pdu[1];
+    }
+
+    for (size_t i = 0; i < count; i++)
+        if (tab[i].opcode == opcode)
+            return tab[i].len;
+
+    return 0;
+}
+
+/* Our replacement for r_lmp_unpack: run the real unpacker first, then tap the
+ * incoming PDU on success (a no-op unless monitoring is on). The unpacker only
+ * writes `out`, leaving `in` -- the wire bytes -- intact, but it hands *len back
+ * as the length of the unpacked struct, which alignment padding pushes past the
+ * PDU, so the capture length comes from the opcode descriptor instead. A
+ * non-zero status is a malformed/unknown PDU the ROM itself discards, so we
+ * leave those uncaptured. */
+static uint8_t unchained_lmp_unpack(uint8_t *out, uint8_t *in, uint8_t *len)
+{
+    uint8_t status = s_orig_lmp_unpack(out, in, len);
+    if (status == 0) {
+        lmp_monitor_on_lmp_rx(in, lmp_pdu_len(in));
+    }
+    return status;
+}
+
 void bt_unchained_init(void)
 {
     // Validate that the required function pointers are available
@@ -98,4 +139,8 @@ void bt_unchained_init(void)
     // Tap outgoing LMP: installed once, gated by the traffic monitor flags
     s_orig_ld_acl_lmp_tx = r_ip_funcs_p->ld_acl_lmp_tx;
     r_ip_funcs_p->ld_acl_lmp_tx = &unchained_ld_acl_lmp_tx;
+
+    // Tap incoming LMP: installed once, gated by the traffic monitor flags
+    s_orig_lmp_unpack = r_ip_funcs_p->lmp_unpack;
+    r_ip_funcs_p->lmp_unpack = &unchained_lmp_unpack;
 }

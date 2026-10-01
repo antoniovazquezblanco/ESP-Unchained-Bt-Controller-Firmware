@@ -57,6 +57,15 @@ void lmp_monitor_on_lmp_tx(uint32_t link_id, const bt_em_lmp_buf_elt_t *buf_elt)
     monitor_emit(LMP_MONITOR_DIR_TX, (uint8_t)link_id, pdu, buf_elt->length);
 }
 
+void lmp_monitor_on_lmp_rx(const uint8_t *pdu, uint8_t pdu_len)
+{
+    if ((s_flags & LMP_MONITOR_LMP_RX) == 0 || pdu == NULL || pdu_len == 0) {
+        return;
+    }
+    /* lmp_unpack has no link id to give us, so RX reports the sentinel. */
+    monitor_emit(LMP_MONITOR_DIR_RX, LMP_MONITOR_LINK_ID_UNKNOWN, pdu, pdu_len);
+}
+
 /* The event twin of s_vs_cmd_desc: no packer, params already laid out. */
 static uint16_t evt_pack_in_place(uint8_t *out, uint8_t *in, uint16_t *out_len, uint16_t in_len)
 {
