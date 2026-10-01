@@ -23,11 +23,12 @@ ESP-IDF firmware that turns an Espressif chip into a Bluetooth HCI controller re
 
 ## Features
 
-|  Target   |    Radio    | Core ver. |         VSC         | BDADDR | RX ADV CH | LMP Mon | LL Mon |
-| :-------: | :---------: | :-------: | :-----------------: | :----: | :-------: | :-----: | :----: |
-|  `esp32`  | BR/EDR + LE |    4.2    |     **Custom**      |   ✓    |           |         |        |
-| `esp32c3` |     LE      |    5.0    | **Stock Espressif** |        |           |         |        |
-| `esp32c5` |     LE      |    6.0    | **Stock Espressif** |        |           |         |        |
+|  Target   |    Radio    | Core ver. |         VSC         |  CompId  | BDADDR | RX ADV CH | LMP Mon | LL Mon |
+| :-------: | :---------: | :-------: | :-----------------: | :------: | :----: | :-------: | :-----: | :----: |
+|  `esp32`  | BR/EDR + LE |    4.2    |     **Custom**      | `0xF00D` |   ✓    |           |    ✓    |        |
+| `esp32c3` |     LE      |    5.0    | **Stock Espressif** | `0x02E5` |        |           |         |        |
+| `esp32c5` |     LE      |    6.0    | **Stock Espressif** | `0x02E5` |        |           |         |        |
+
 
 ## Documentation
 
