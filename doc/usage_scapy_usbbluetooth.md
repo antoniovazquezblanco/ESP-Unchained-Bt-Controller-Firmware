@@ -40,7 +40,7 @@ Pass an **unopened** `SerialController`; the socket opens it. These controllers 
 
 ## Call a vendor command
 
-The classic ESP32 build answers our own vendor commands (see the capability matrix in the [README](../README.md)). This reads INFO (`0xFC00` = OGF `0x3F`, OCF `0x000`), which returns the firmware name, version and board name:
+The classic ESP32 build answers our own vendor commands (see [Vendor-specific HCI commands](vendor_commands.md) for the full set). This reads INFO (`0xFC00` = OGF `0x3F`, OCF `0x000`), which returns the firmware name, version and board name:
 
 ```python
 resp = sock.sr1(HCI_Hdr() / HCI_Command_Hdr(ogf=0x3f, ocf=0x000))
