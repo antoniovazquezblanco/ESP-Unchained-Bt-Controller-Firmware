@@ -11,8 +11,8 @@
 
 #include <stdint.h>
 
-#include "bt_em_buf.h"
-#include "hci_desc_tabs.h"
+#include "rom/bt_em_buf.h"
+#include "rom/hci_desc_tabs.h"
 
 /*
  * Monitor flags, the SET_TRAFFIC_MONITOR parameter byte. BR/EDR LMP and BLE LL,
@@ -79,7 +79,8 @@ void lmp_monitor_on_lmp_rx(const uint8_t *pdu, uint8_t pdu_len);
  * when LL_TX is enabled and is a no-op otherwise. Called before the ROM handler
  * runs, so the descriptor still describes this PDU.
  */
-void lmp_monitor_on_ll_tx(int32_t tx_desc);
+struct em_desc_node;
+void lmp_monitor_on_ll_tx(const struct em_desc_node *tx_desc);
 
 /*
  * The incoming-LL tap. esp32_bt_unchained wires it into the lld_pdu_rx_handler

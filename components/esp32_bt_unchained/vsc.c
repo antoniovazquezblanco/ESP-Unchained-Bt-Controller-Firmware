@@ -140,8 +140,7 @@ static void vs_info(uint16_t opcode, uint8_t length, const uint8_t *payload)
 static void vs_supported_cmds(uint16_t opcode, uint8_t length, const uint8_t *payload)
 {
     uint64_t supported = 0;
-    for (size_t i = 0; i < sizeof(s_vs_cmds) / sizeof(s_vs_cmds[0]); i++)
-    {
+    for (size_t i = 0; i < sizeof(s_vs_cmds) / sizeof(s_vs_cmds[0]); i++) {
         uint16_t ocf = HCI_OPCODE_OCF(s_vs_cmds[i].opcode);
         if (ocf < 64)
             supported |= (uint64_t)1 << ocf;
@@ -160,8 +159,7 @@ static void vs_supported_cmds(uint16_t opcode, uint8_t length, const uint8_t *pa
 /* 0xFC02 SET_BDADDR: set the controller public address from the 6-byte payload. */
 static void vs_set_bdaddr(uint16_t opcode, uint8_t length, const uint8_t *payload)
 {
-    if (length < BD_ADDR_LEN)
-    {
+    if (length < BD_ADDR_LEN) {
         vs_cmd_complete_status(opcode, HCI_ERR_INVALID_PARAMS);
         return;
     }
@@ -178,13 +176,11 @@ static void vs_set_bdaddr(uint16_t opcode, uint8_t length, const uint8_t *payloa
 /* 0xFC03 SET_TRAFFIC_MONITOR: enable/disable low-level PDU reporting (lmp_monitor.h). */
 static void vs_set_traffic_monitor(uint16_t opcode, uint8_t length, const uint8_t *payload)
 {
-    if (length < 1)
-    {
+    if (length < 1) {
         vs_cmd_complete_status(opcode, HCI_ERR_INVALID_PARAMS);
         return;
     }
-    if ((payload[0] & ~LMP_MONITOR_SUPPORTED) != 0)
-    {
+    if ((payload[0] & ~LMP_MONITOR_SUPPORTED) != 0) {
         /* A flag bit we have no hook for yet -- refuse rather than silently drop it. */
         vs_cmd_complete_status(opcode, HCI_ERR_UNSUPPORTED_FEATURE);
         return;
@@ -196,13 +192,11 @@ static void vs_set_traffic_monitor(uint16_t opcode, uint8_t length, const uint8_
 /* 0xFC04 SET_SCAN_CHANNEL: pin scanning to one primary channel (scan_pin.h). */
 static void vs_set_scan_channel(uint16_t opcode, uint8_t length, const uint8_t *payload)
 {
-    if (length < 1)
-    {
+    if (length < 1) {
         vs_cmd_complete_status(opcode, HCI_ERR_INVALID_PARAMS);
         return;
     }
-    if (!scan_pin_set(payload[0]))
-    {
+    if (!scan_pin_set(payload[0])) {
         vs_cmd_complete_status(opcode, HCI_ERR_INVALID_PARAMS);
         return;
     }
@@ -212,8 +206,7 @@ static void vs_set_scan_channel(uint16_t opcode, uint8_t length, const uint8_t *
 void vsc_cmd_received(uint16_t opcode, uint8_t length, uint8_t *payload)
 {
     for (size_t i = 0; i < sizeof(s_vs_cmds) / sizeof(s_vs_cmds[0]); i++)
-        if (s_vs_cmds[i].opcode == opcode)
-        {
+        if (s_vs_cmds[i].opcode == opcode) {
             s_vs_cmds[i].handler(opcode, length, payload);
             return;
         }

@@ -127,7 +127,7 @@ static uint8_t unchained_lmp_unpack(uint8_t *out, uint8_t *in, uint8_t *len)
 /* Our replacement for r_lld_pdu_data_tx_push: tap the outgoing LL PDU (a no-op
  * unless monitoring is on) while the descriptor still describes it, then run the
  * real handler unchanged. */
-static void unchained_lld_pdu_data_tx_push(int32_t lld_env, int32_t tx_desc, uint8_t prog)
+static void unchained_lld_pdu_data_tx_push(void *lld_env, struct em_desc_node *tx_desc, uint8_t prog)
 {
     lmp_monitor_on_ll_tx(tx_desc);
     s_orig_lld_pdu_data_tx_push(lld_env, tx_desc, prog);
@@ -135,7 +135,7 @@ static void unchained_lld_pdu_data_tx_push(int32_t lld_env, int32_t tx_desc, uin
 
 /* Our replacement for r_lld_pdu_rx_handler: tap the received LL PDUs before the
  * real handler drains the ring and frees their buffers. */
-static void unchained_lld_pdu_rx_handler(int32_t lld_env, uint8_t nb_rx)
+static void unchained_lld_pdu_rx_handler(void *lld_env, uint8_t nb_rx)
 {
     lmp_monitor_on_ll_rx(nb_rx);
     s_orig_lld_pdu_rx_handler(lld_env, nb_rx);
@@ -143,9 +143,9 @@ static void unchained_lld_pdu_rx_handler(int32_t lld_env, uint8_t nb_rx)
 
 /* Our replacement for r_lld_scan_start: let the ROM set the scan up with the
  * full channel map, then re-apply the channel pin (a no-op unless one is set). */
-static int32_t unchained_lld_scan_start(int32_t scan_par, int32_t pdu)
+static void *unchained_lld_scan_start(void *scan_par, void *pdu)
 {
-    int32_t evt = s_orig_lld_scan_start(scan_par, pdu);
+    void *evt = s_orig_lld_scan_start(scan_par, pdu);
     scan_pin_on_scan_start();
     return evt;
 }

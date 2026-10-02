@@ -90,19 +90,15 @@ static void ll_emit(uint8_t direction, uint8_t hdr0, uint8_t length, const uint8
     monitor_emit(direction, LMP_MONITOR_LINK_ID_UNKNOWN, header, sizeof(header), payload, length);
 }
 
-void lmp_monitor_on_ll_tx(int32_t tx_desc)
+void lmp_monitor_on_ll_tx(const struct em_desc_node *tx_desc)
 {
-    if ((s_flags & LMP_MONITOR_LL_TX) == 0 || tx_desc == 0) {
-        return;
-    }
-    const lld_tx_desc_t *desc = (const lld_tx_desc_t *)tx_desc;
-    if (desc->length == 0) {
+    if ((s_flags & LMP_MONITOR_LL_TX) == 0 || tx_desc == NULL || tx_desc->length == 0) {
         return;
     }
     /* The payload sits in exchange memory at an offset the descriptor carries;
      * llid and length rebuild the 2-byte LL header the ROM will put on air. */
-    const uint8_t *payload = (const uint8_t *)(LLD_EM_BASE + desc->buf_off);
-    ll_emit(LMP_MONITOR_DIR_TX, desc->llid, desc->length, payload);
+    const uint8_t *payload = (const uint8_t *)em + tx_desc->buffer_ptr;
+    ll_emit(LMP_MONITOR_DIR_TX, tx_desc->llid, tx_desc->length, payload);
 }
 
 void lmp_monitor_on_ll_rx(uint8_t nb_rx)
@@ -113,9 +109,9 @@ void lmp_monitor_on_ll_rx(uint8_t nb_rx)
     /* The ROM is about to drain nb_rx buffers starting at the current RX index,
      * advancing it (mod the ring size) per PDU. We read the same descriptors
      * first, before lld_pdu_rx_handler frees them. */
-    uint8_t idx = LLD_RX_CURRENT_IDX;
-    for (uint8_t i = 0; i < nb_rx; i++, idx = (idx + 1) & (LLD_RX_DESC_COUNT - 1)) {
-        uint16_t hdr = lld_rx_desc[idx].hdr;
+    uint8_t idx = em_buf_env.rx_current;
+    for (uint8_t i = 0; i < nb_rx; i++, idx = (idx + 1) & (EM_BLE_RXDESC_COUNT - 1)) {
+        uint16_t hdr = em->ble.rxdesc.elt[idx].rxphce.raw;
         uint8_t length = (uint8_t)(hdr >> 8);
         if (length == 0) {
             continue; /* empty PDU (keepalive); nothing to capture */

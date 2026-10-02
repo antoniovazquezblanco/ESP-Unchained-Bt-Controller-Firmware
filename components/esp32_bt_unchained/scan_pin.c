@@ -27,7 +27,7 @@ static inline void scan_pin_barrier(void)
 /* Hold the adv/scan radio on `channel` (fh_en = 0), or resume hopping. */
 static void scan_pin_apply(uint8_t channel)
 {
-    lld_hopcntl_t h = {.raw = LLD_SCAN_HOPCNTL.raw};
+    em_ble_cs_hopcntl_t h = {.raw = em->ble.cs.elt[LLD_ADV_HDL].hopcntl.raw};
     if (channel == SCAN_PIN_OFF) {
         h.fields.fh_en = 1;
     } else {
@@ -35,7 +35,7 @@ static void scan_pin_apply(uint8_t channel)
         h.fields.hop_int = 0;
         h.fields.fh_en = 0;
     }
-    LLD_SCAN_HOPCNTL.raw = h.raw;
+    em->ble.cs.elt[LLD_ADV_HDL].hopcntl.raw = h.raw;
     scan_pin_barrier();
 }
 
