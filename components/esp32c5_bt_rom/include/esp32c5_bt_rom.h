@@ -29,8 +29,7 @@
 /* Returns false if the controller config struct is not yet allocated. */
 static inline bool esp32c5_bt_set_compid(uint16_t compid)
 {
-    if (priv_config_opts_ptr == NULL)
-    {
+    if (priv_config_opts_ptr == NULL) {
         return false;
     }
     priv_config_opts_ptr->company_id = compid;
@@ -39,8 +38,7 @@ static inline bool esp32c5_bt_set_compid(uint16_t compid)
 
 static inline uint16_t esp32c5_bt_get_compid(void)
 {
-    if (priv_config_opts_ptr == NULL)
-    {
+    if (priv_config_opts_ptr == NULL) {
         return 0;
     }
     return priv_config_opts_ptr->company_id;

@@ -30,23 +30,29 @@
  * debugging it on the bench -- esp_lcd cannot read back from the panel (MISO is
  * not wired), so a mis-pinned display reports success on every call and simply
  * shows nothing. */
-#if CONFIG_UNCHAINED_DISPLAY_SCLK_GPIO < 0 || CONFIG_UNCHAINED_DISPLAY_MOSI_GPIO < 0 ||     CONFIG_UNCHAINED_DISPLAY_CS_GPIO < 0   || CONFIG_UNCHAINED_DISPLAY_DC_GPIO < 0
+#if CONFIG_UNCHAINED_DISPLAY_SCLK_GPIO < 0 || CONFIG_UNCHAINED_DISPLAY_MOSI_GPIO < 0 || CONFIG_UNCHAINED_DISPLAY_CS_GPIO < 0 || CONFIG_UNCHAINED_DISPLAY_DC_GPIO < 0
 #error "UNCHAINED_DISPLAY_ENABLED but the display bus pins are unset. Set SCLK/MOSI/CS/DC (and the panel's RST and backlight, if it wires them) in boards/<name>.defaults."
 #endif
 
 static const char *TAG = "DISP";
 
-#define DISP_W    CONFIG_UNCHAINED_DISPLAY_WIDTH
-#define DISP_H    CONFIG_UNCHAINED_DISPLAY_HEIGHT
+#define DISP_W CONFIG_UNCHAINED_DISPLAY_WIDTH
+#define DISP_H CONFIG_UNCHAINED_DISPLAY_HEIGHT
 #define DISP_HOST CONFIG_UNCHAINED_DISPLAY_SPI_HOST
 
-#define DRAW_STRIP 32                       /* rows per DMA blit in the draw helpers */
+#define DRAW_STRIP 32 /* rows per DMA blit in the draw helpers */
 
 static esp_lcd_panel_handle_t s_panel;
-static SemaphoreHandle_t s_blit_done;       /* given when a blit's DMA completes */
+static SemaphoreHandle_t s_blit_done; /* given when a blit's DMA completes */
 
-int display_width(void)  { return DISP_W; }
-int display_height(void) { return DISP_H; }
+int display_width(void)
+{
+    return DISP_W;
+}
+int display_height(void)
+{
+    return DISP_H;
+}
 
 /* esp_lcd queues colour transfers (async); this fires when one finishes. */
 static bool IRAM_ATTR on_blit_done(esp_lcd_panel_io_handle_t io,
@@ -59,7 +65,8 @@ static bool IRAM_ATTR on_blit_done(esp_lcd_panel_io_handle_t io,
 
 void display_blit(int x, int y, int w, int h, const uint16_t *px)
 {
-    if (!s_panel) return;
+    if (!s_panel)
+        return;
     esp_lcd_panel_draw_bitmap(s_panel, x, y, x + w, y + h, px);
     /* The transfer is async and reads `px` by DMA; wait so the caller may reuse
      * or free the buffer immediately. */
@@ -70,9 +77,11 @@ void display_blit(int x, int y, int w, int h, const uint16_t *px)
 
 void display_fill_rect(int x, int y, int w, int h, uint16_t color)
 {
-    if (w <= 0 || h <= 0) return;
+    if (w <= 0 || h <= 0)
+        return;
     uint16_t *buf = heap_caps_malloc(w * DRAW_STRIP * sizeof(uint16_t), MALLOC_CAP_DMA);
-    if (!buf) return;
+    if (!buf)
+        return;
     gfx_fill(buf, w, DRAW_STRIP, color);
     for (int yy = 0; yy < h; yy += DRAW_STRIP) {
         int rows = (h - yy < DRAW_STRIP) ? (h - yy) : DRAW_STRIP;
@@ -85,9 +94,11 @@ void display_fill_rect(int x, int y, int w, int h, uint16_t color)
  * copied into a DMA scratch buffer a strip at a time. */
 void display_draw_image(int x, int y, int w, int h, const uint16_t *src)
 {
-    if (w <= 0 || h <= 0) return;
+    if (w <= 0 || h <= 0)
+        return;
     uint16_t *buf = heap_caps_malloc(w * DRAW_STRIP * sizeof(uint16_t), MALLOC_CAP_DMA);
-    if (!buf) return;
+    if (!buf)
+        return;
     for (int yy = 0; yy < h; yy += DRAW_STRIP) {
         int rows = (h - yy < DRAW_STRIP) ? (h - yy) : DRAW_STRIP;
         memcpy(buf, &src[(size_t)yy * w], (size_t)rows * w * sizeof(uint16_t));
@@ -101,9 +112,11 @@ void display_draw_text(int x, int y, const char *s, const font_t *font,
                        uint16_t fg, uint16_t bg)
 {
     int tw = (int)strlen(s) * font->w;
-    if (tw <= 0) return;
+    if (tw <= 0)
+        return;
     uint16_t *buf = heap_caps_malloc((size_t)tw * font->h * sizeof(uint16_t), MALLOC_CAP_DMA);
-    if (!buf) return;
+    if (!buf)
+        return;
     gfx_fill(buf, tw, font->h, bg);
     gfx_text(buf, tw, 0, 0, s, font, fg);
     display_blit(x, y, tw, font->h, buf);
@@ -150,7 +163,8 @@ esp_err_t display_init(void)
         .lcd_param_bits = 8,
     };
     ESP_RETURN_ON_ERROR(esp_lcd_new_panel_io_spi((esp_lcd_spi_bus_handle_t)DISP_HOST,
-                                                 &io_cfg, &io), TAG, "panel io");
+                                                 &io_cfg, &io),
+                        TAG, "panel io");
 
     esp_lcd_panel_dev_config_t panel_cfg = {
         .reset_gpio_num = CONFIG_UNCHAINED_DISPLAY_RST_GPIO,
@@ -179,6 +193,9 @@ esp_err_t display_init(void)
 
 #else /* !CONFIG_UNCHAINED_DISPLAY_ENABLED */
 
-esp_err_t display_init(void) { return ESP_OK; }
+esp_err_t display_init(void)
+{
+    return ESP_OK;
+}
 
 #endif

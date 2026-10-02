@@ -27,7 +27,7 @@ esp_err_t transport_init(void)
 #elif CONFIG_UNCHAINED_HCI_OVER_UART
     return hci_uart_init();
 #else
-    #pragma message("No HCI transport selected!")
+#pragma message("No HCI transport selected!")
     ESP_LOGW(TAG, "No HCI transport selected!");
     return ESP_OK;
 #endif

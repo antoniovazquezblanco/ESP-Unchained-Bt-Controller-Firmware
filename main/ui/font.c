@@ -6,6 +6,9 @@
  */
 #include "font.h"
 
+/* hand-arranged glyph grid, one glyph per row. */
+/* clang-format off */
+
 /* 8x8 font (ASCII 0x20-0x7F), bit0 = leftmost pixel.
  *
  * Glyph data is the unscii-8 font (http://viznut.fi/unscii/),

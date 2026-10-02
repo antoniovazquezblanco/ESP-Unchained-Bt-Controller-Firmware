@@ -9,7 +9,8 @@
 void gfx_fill(uint16_t *buf, int w, int h, uint16_t color)
 {
     int n = w * h;
-    for (int i = 0; i < n; i++) buf[i] = color;
+    for (int i = 0; i < n; i++)
+        buf[i] = color;
 }
 
 void gfx_glyph(uint16_t *buf, int stride, int x, int y, char ch,
@@ -20,7 +21,8 @@ void gfx_glyph(uint16_t *buf, int stride, int x, int y, char ch,
         uint8_t row = g[ry];
         uint16_t *p = &buf[(y + ry) * stride + x];
         for (int cx = 0; cx < font->w; cx++) {
-            if (row & (1 << cx)) p[cx] = fg;
+            if (row & (1 << cx))
+                p[cx] = fg;
         }
     }
 }

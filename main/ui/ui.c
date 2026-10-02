@@ -28,7 +28,7 @@
 
 static const char *TAG = "UI";
 
-#define SPLASH_MS 2000                      /* how long the boot logo stays up */
+#define SPLASH_MS 2000 /* how long the boot logo stays up */
 
 static bool s_ready;
 static bool s_splash_shown;
@@ -42,11 +42,11 @@ static int log_vprintf(const char *fmt, va_list ap)
     va_list ap2;
     va_copy(ap2, ap);
     int n = vsnprintf(tmp, sizeof(tmp), fmt, ap);
-    int r = s_prev ? s_prev(fmt, ap2) : n;  /* keep the normal console */
+    int r = s_prev ? s_prev(fmt, ap2) : n; /* keep the normal console */
     va_end(ap2);
     if (s_sb && n > 0) {
         size_t len = (n < (int)sizeof(tmp)) ? (size_t)n : sizeof(tmp) - 1;
-        xStreamBufferSend(s_sb, tmp, len, 0);   /* non-blocking; drop if full */
+        xStreamBufferSend(s_sb, tmp, len, 0); /* non-blocking; drop if full */
     }
     return r;
 }
@@ -57,7 +57,8 @@ static void ui_task(void *arg)
 
     /* Hold the splash, then bring up the console -- ui_console_init() repaints the
      * whole panel, erasing the splash -- and replay the log buffered so far. */
-    if (s_splash_shown) vTaskDelay(pdMS_TO_TICKS(SPLASH_MS));
+    if (s_splash_shown)
+        vTaskDelay(pdMS_TO_TICKS(SPLASH_MS));
     if (ui_console_init() != ESP_OK) {
         ESP_LOGW(TAG, "console init failed");
         vTaskDelete(NULL);
@@ -75,7 +76,8 @@ static void ui_task(void *arg)
 
 void ui_init(void)
 {
-    if (s_ready) return;                    /* already initialised */
+    if (s_ready)
+        return; /* already initialised */
 
     /* The panel is ours to bring up: callers only ever talk to ui.h. */
     esp_err_t ret = display_init();
@@ -83,11 +85,12 @@ void ui_init(void)
         ESP_LOGW(TAG, "display init failed: %s", esp_err_to_name(ret));
         return;
     }
-    s_splash_shown = splash_show();         /* logo/name; the task swaps in the
-                                             * console after SPLASH_MS */
+    s_splash_shown = splash_show(); /* logo/name; the task swaps in the
+                                     * console after SPLASH_MS */
 
-    s_sb = xStreamBufferCreate(4096, 1);    /* buffers the boot log during the splash */
-    if (!s_sb) return;
+    s_sb = xStreamBufferCreate(4096, 1); /* buffers the boot log during the splash */
+    if (!s_sb)
+        return;
     s_ready = true;
 
     xTaskCreate(ui_task, "ui", 4096, NULL, 5, NULL);

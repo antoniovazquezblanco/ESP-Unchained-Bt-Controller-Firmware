@@ -13,10 +13,11 @@
 
 #include <stdint.h>
 
-typedef struct {
-    uint8_t w;                          /* cell width in pixels  */
-    uint8_t h;                          /* cell height in pixels */
-    const uint8_t *(*glyph)(char c);    /* h bytes, bit0 = leftmost pixel */
+typedef struct
+{
+    uint8_t w;                       /* cell width in pixels  */
+    uint8_t h;                       /* cell height in pixels */
+    const uint8_t *(*glyph)(char c); /* h bytes, bit0 = leftmost pixel */
 } font_t;
 
 /* 8x8 ASCII font (0x20-0x7F). */

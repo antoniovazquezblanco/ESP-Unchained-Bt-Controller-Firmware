@@ -45,8 +45,7 @@ static int notify_host_recv(uint8_t *data, uint16_t len)
     /* Called in controller context, so it must not block. A partial write would
      * desynchronise the H4 stream for good, so a packet that does not fit whole
      * is dropped whole and the stream stays well-formed. */
-    if (xStreamBufferSpacesAvailable(s_tx) < len)
-    {
+    if (xStreamBufferSpacesAvailable(s_tx) < len) {
         ESP_LOGW(TAG, "host not draining, dropped a %u byte packet", (unsigned)len);
         return 0;
     }
@@ -62,16 +61,13 @@ static const esp_vhci_host_callback_t s_vhci_cb = {
 static void vhci_bridge_tx_task(void *arg)
 {
     uint8_t buf[256];
-    for (;;)
-    {
+    for (;;) {
         size_t n = xStreamBufferReceive(s_tx, buf, sizeof(buf), portMAX_DELAY);
         /* Blocking write: if the host is not reading, the back-pressure lands
          * here, on a stalled task, not in the controller. */
-        for (size_t off = 0; off < n;)
-        {
+        for (size_t off = 0; off < n;) {
             int w = s_io->write(buf + off, n - off);
-            if (w <= 0)
-            {
+            if (w <= 0) {
                 break;
             }
             off += (size_t)w;
@@ -85,8 +81,7 @@ static void vhci_bridge_tx_task(void *arg)
  * host has no business sending. */
 static size_t h4_header_len(uint8_t type)
 {
-    switch (type)
-    {
+    switch (type) {
     case HCI_PKT_CMD:
         return HCI_CMD_HDR_SIZE;
     case HCI_PKT_ACL:
@@ -102,8 +97,7 @@ static size_t h4_header_len(uint8_t type)
 
 static size_t h4_payload_len(uint8_t type, const uint8_t *hdr)
 {
-    switch (type)
-    {
+    switch (type) {
     case HCI_PKT_CMD:
         return hdr[2];
     case HCI_PKT_SCO:
@@ -121,10 +115,8 @@ static void send_to_controller(uint8_t *frame, size_t len)
 {
     /* The controller takes one packet at a time and calls back when it can take
      * the next. */
-    while (!esp_vhci_host_check_send_available())
-    {
-        if (xSemaphoreTake(s_can_send, pdMS_TO_TICKS(1000)) != pdTRUE)
-        {
+    while (!esp_vhci_host_check_send_available()) {
+        if (xSemaphoreTake(s_can_send, pdMS_TO_TICKS(1000)) != pdTRUE) {
             ESP_LOGW(TAG, "controller still not accepting packets");
         }
     }
@@ -143,27 +135,22 @@ static void vhci_bridge_rx_task(void *arg)
         WANT_PAYLOAD
     } state = WANT_TYPE;
 
-    for (;;)
-    {
+    for (;;) {
         int n = s_io->read(chunk, sizeof(chunk));
-        if (n <= 0)
-        {
+        if (n <= 0) {
             continue;
         }
 
-        for (int i = 0; i < n; i++)
-        {
+        for (int i = 0; i < n; i++) {
             uint8_t b = chunk[i];
 
-            switch (state)
-            {
+            switch (state) {
             case WANT_TYPE:
                 /* Anything that is not a packet-type indicator is noise from a
                  * terminal probing the port; stay here until the stream makes
                  * sense again. */
                 hdr_len = h4_header_len(b);
-                if (hdr_len == 0)
-                {
+                if (hdr_len == 0) {
                     continue;
                 }
                 frame[0] = b;
@@ -173,34 +160,27 @@ static void vhci_bridge_rx_task(void *arg)
 
             case WANT_HDR:
                 frame[have++] = b;
-                if (have < 1 + hdr_len)
-                {
+                if (have < 1 + hdr_len) {
                     break;
                 }
                 payload_len = h4_payload_len(frame[0], frame + 1);
-                if (payload_len > HCI_MAX_PAYLOAD)
-                {
+                if (payload_len > HCI_MAX_PAYLOAD) {
                     ESP_LOGW(TAG, "type 0x%02x claims %u bytes, resyncing",
                              frame[0], (unsigned)payload_len);
                     state = WANT_TYPE;
                     have = 0;
-                }
-                else if (payload_len == 0)
-                {
+                } else if (payload_len == 0) {
                     send_to_controller(frame, have);
                     state = WANT_TYPE;
                     have = 0;
-                }
-                else
-                {
+                } else {
                     state = WANT_PAYLOAD;
                 }
                 break;
 
             case WANT_PAYLOAD:
                 frame[have++] = b;
-                if (have == 1 + hdr_len + payload_len)
-                {
+                if (have == 1 + hdr_len + payload_len) {
                     send_to_controller(frame, have);
                     state = WANT_TYPE;
                     have = 0;

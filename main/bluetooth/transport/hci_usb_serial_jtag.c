@@ -31,8 +31,8 @@
 
 static const char *TAG = "HCIUSJ";
 
-#define USB_RX_BUF      1024
-#define USB_TX_BUF      2048
+#define USB_RX_BUF 1024
+#define USB_TX_BUF 2048
 
 static int hci_usb_serial_jtag_read(uint8_t *buf, size_t len)
 {
@@ -46,8 +46,8 @@ static int hci_usb_serial_jtag_write(const uint8_t *buf, size_t len)
 }
 
 static const vhci_bridge_io_t s_io = {
-    .name  = "USB-Serial/JTAG",
-    .read  = hci_usb_serial_jtag_read,
+    .name = "USB-Serial/JTAG",
+    .read = hci_usb_serial_jtag_read,
     .write = hci_usb_serial_jtag_write,
 };
 

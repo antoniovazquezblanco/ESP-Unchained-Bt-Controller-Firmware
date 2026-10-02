@@ -19,20 +19,20 @@ static const char *TAG = "BT";
  * only on the classic ESP32; BLE-only chips (C3/C5) fall through to the default.
  * Memory for the mode we do NOT run is released. */
 #if defined(CONFIG_BTDM_CTRL_MODE_BTDM)
-#  define BT_MODE          ESP_BT_MODE_BTDM
-#  define BT_MODE_UNUSED   0
+#define BT_MODE ESP_BT_MODE_BTDM
+#define BT_MODE_UNUSED 0
 #elif defined(CONFIG_BTDM_CTRL_MODE_BR_EDR_ONLY)
-#  define BT_MODE          ESP_BT_MODE_CLASSIC_BT
-#  define BT_MODE_UNUSED   ESP_BT_MODE_BLE
+#define BT_MODE ESP_BT_MODE_CLASSIC_BT
+#define BT_MODE_UNUSED ESP_BT_MODE_BLE
 #else
-#  define BT_MODE          ESP_BT_MODE_BLE
-#  define BT_MODE_UNUSED   ESP_BT_MODE_CLASSIC_BT
+#define BT_MODE ESP_BT_MODE_BLE
+#define BT_MODE_UNUSED ESP_BT_MODE_CLASSIC_BT
 #endif
 
 esp_err_t bluetooth_init(void)
 {
 #if BT_MODE_UNUSED
-    (void)esp_bt_controller_mem_release(BT_MODE_UNUSED);   /* free the unused mode's RAM */
+    (void)esp_bt_controller_mem_release(BT_MODE_UNUSED); /* free the unused mode's RAM */
 #endif
 
     esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
