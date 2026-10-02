@@ -57,9 +57,9 @@ struct lld_conn
 struct lld_evt_tag
 {
     struct lld_evt_anchor anchor_point;   /**< Information about synchronization */
-    struct co_list tx_acl_rdy;        /**< List of TX data descriptors ready for transmission */
-    struct co_list tx_acl_tofree;     /**< List of TX data descriptors ready to be freed */
-    struct co_list tx_prog;           /**< List of TX LLCP descriptors programmed for transmission */
+    struct co_list tx_acl_rdy;            /**< List of TX data descriptors ready for transmission */
+    struct co_list tx_acl_tofree;         /**< List of TX data descriptors ready to be freed */
+    struct co_list tx_prog;               /**< List of TX LLCP descriptors programmed for transmission */
     struct ea_interval_tag *interval_elt; /**< Interval element linked to this event */
     union lld_evt_info
     {

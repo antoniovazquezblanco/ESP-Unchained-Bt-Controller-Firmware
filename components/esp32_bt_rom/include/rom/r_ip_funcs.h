@@ -13,8 +13,15 @@
 #include <stdint.h>
 
 #include "rom/bt_em_buf.h"
+
+/* generated table; alignment maintained by the generator. */
+/* clang-format off */
 #include "hci.h"
 #include "rom/hci_desc_tabs.h"
+
+/* Outgoing-LL TX descriptor, passed by pointer to lld_pdu_data_tx_push; see
+ * struct em_desc_node in rom/em.h. */
+struct em_desc_node;
 
 /**
  * Signature of r_bt_util_buf_init, slot 0 of the IP functions table.
@@ -3585,9 +3592,11 @@ typedef void (*r_lld_adv_stop_hack_fn_t)(int32_t);
 
 /**
  * r_lld_scan_start_hack, slot 576 of the IP functions table.
- * Lower Link Driver (LE baseband): scan start (Espressif override).
+ * Lower Link Driver (LE baseband): scan start (Espressif override). Takes the
+ * scan parameters and an optional PDU buffer (both opaque here); returns the
+ * created scan event element, or NULL on failure.
  */
-typedef int32_t (*r_lld_scan_start_hack_fn_t)(int32_t, int32_t);
+typedef void *(*r_lld_scan_start_hack_fn_t)(void *scan_par, void *pdu);
 
 /**
  * r_lld_scan_stop_hack, slot 577 of the IP functions table.
@@ -3719,11 +3728,11 @@ typedef void (*r_lld_pdu_tx_loop_fn_t)(int32_t);
  * The PDU bytes live in EM; resolving them needs the buffer-index -> EM-offset
  * map, still to be pinned on-chip.
  *
- * @param lld_env  the connection's lower-link-driver env.
+ * @param lld_env  the connection's lower-link-driver env (opaque here).
  * @param tx_desc  the TX descriptor element to push.
  * @param prog     non-zero to also mark it for immediate programming.
  */
-typedef void (*r_lld_pdu_data_tx_push_fn_t)(int32_t lld_env, int32_t tx_desc, uint8_t prog);
+typedef void (*r_lld_pdu_data_tx_push_fn_t)(void *lld_env, struct em_desc_node *tx_desc, uint8_t prog);
 
 /**
  * r_lld_pdu_data_send, slot 597 of the IP functions table.
@@ -3778,10 +3787,10 @@ typedef uint32_t (*r_lld_pdu_adv_pack_fn_t)(uint32_t, uint32_t *, uint8_t *);
  * hook. The RX PDU bytes are at EM DAT_3ffb0950[buf_idx*6]; the exact offsets
  * want an on-chip pass before we build on them.
  *
- * @param lld_env the connection's lower-link-driver env.
+ * @param lld_env the connection's lower-link-driver env (opaque here).
  * @param nb_rx   number of received PDUs to process this event.
  */
-typedef void (*r_lld_pdu_rx_handler_fn_t)(int32_t lld_env, uint8_t nb_rx);
+typedef void (*r_lld_pdu_rx_handler_fn_t)(void *lld_env, uint8_t nb_rx);
 
 /**
  * r_lld_util_instant_get, slot 604 of the IP functions table.

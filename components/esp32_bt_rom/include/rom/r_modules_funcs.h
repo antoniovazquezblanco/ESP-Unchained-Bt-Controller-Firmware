@@ -10,6 +10,9 @@
 #ifndef R_MODULES_FUNCS_H
 #define R_MODULES_FUNCS_H
 
+/* generated table; alignment maintained by the generator. */
+/* clang-format off */
+
 #include <stdbool.h>
 #include <stdint.h>
 
