@@ -17,6 +17,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "ip_funcs.h"
 #include "sdk_config.h"
 
 /*
@@ -25,10 +26,11 @@
  */
 typedef struct
 {
-    uint16_t opcode; /* OGF<<10 | OCF */
-    uint16_t flags;  /* low nibble: CC/CS dest & return-param format; 0x40: handler self-unpacks */
-    void *fn;        /* +4: param-unpack format (std cmds) or inline handler (vendor cmds) */
-    void *ret_fmt;   /* +8: return-parameter format / handler */
+    uint16_t opcode;      /* +0 OGF<<10 | OCF */
+    uint8_t flags;        /* +2 low nibble CC/CS dest; 0x40 handler self-unpacks; 0x80 ret_fmt is a pack fn */
+    uint8_t par_size_max; /* +3 max accepted parameter length (r_hci_cmd_get_max_param_size) */
+    void *fn;             /* +4 param-unpack format (std cmds) or inline handler (vendor cmds) */
+    void *ret_fmt;        /* +8 return-parameter pack format (0x80) or format table */
 } esp32c3_hci_cmd_desc_t;
 
 /*
