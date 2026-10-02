@@ -13,6 +13,7 @@ Any other opcode in the group replies `0x01` Unknown HCI Command.
 | `0xFC01` | `SUPPORTED_CMDS`      | Which of these commands are implemented.        |
 | `0xFC02` | `SET_BDADDR`          | Override the controller public address.         |
 | `0xFC03` | `SET_TRAFFIC_MONITOR` | Enable low-level link traffic capture.          |
+| `0xFC04` | `SET_SCAN_CHANNEL`    | Pin advertising reception to one primary channel. |
 
 ### `0xFC00` INFO
 
@@ -73,6 +74,24 @@ so it is not captured, though the peer's replies to it still arrive on `0x08`.
 Returns status.
 An empty parameter returns `0x12` Invalid HCI Command Parameters.
 A reserved flag returns `0x11` Unsupported Feature or Parameter Value.
+
+### `0xFC04` SET_SCAN_CHANNEL
+
+| Offset | Size | Field   |
+| :----- | :--- | :------ |
+| 0      | 1    | Channel |
+
+Channel 37, 38 or 39 pins advertising reception (scanning) to that single
+primary channel; 0 restores the normal three-channel hop.
+
+Scanning normally sweeps all three primary channels. Pinning keeps the radio on
+one, so you only receive advertisements sent on it. It takes effect on the
+running scan and on scans started afterwards, and persists until changed or the
+controller resets.
+
+Returns status.
+An empty parameter, or a channel other than 0/37/38/39, returns `0x12` Invalid
+HCI Command Parameters.
 
 ## Events
 

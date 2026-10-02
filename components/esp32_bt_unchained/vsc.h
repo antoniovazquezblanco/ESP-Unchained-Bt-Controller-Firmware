@@ -63,6 +63,17 @@
     HCI_OPCODE(HCI_OGF_VENDOR, UNCHAINED_VS_SET_TRAFFIC_MONITOR_OCF) /* 0xFC03 */
 
 /*
+ * SET_SCAN_CHANNEL: pin advertising reception (scanning) to one primary channel
+ * instead of hopping 37/38/39.
+ *
+ * in:  1-byte channel: 37, 38 or 39 to pin, 0 to restore the three-channel hop.
+ * out: status; INVALID_PARAMS if no byte was given or it is not 0/37/38/39.
+ */
+#define UNCHAINED_VS_SET_SCAN_CHANNEL_OCF 0x004
+#define UNCHAINED_VS_SET_SCAN_CHANNEL_OPCODE \
+    HCI_OPCODE(HCI_OGF_VENDOR, UNCHAINED_VS_SET_SCAN_CHANNEL_OCF) /* 0xFC04 */
+
+/*
  * The command descriptor the ROM needs to pack a Command Complete for one of our
  * opcodes; NULL for anything we do not implement.
  */

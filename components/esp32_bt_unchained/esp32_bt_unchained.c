@@ -12,6 +12,7 @@
 #include "esp32_bt_rom.h"
 #include "hci.h"
 #include "lmp_monitor.h"
+#include "scan_pin.h"
 #include "vsc.h"
 
 /* Identifiable company id stamped over the ROM default (0x0060). */
@@ -37,6 +38,9 @@ static r_lld_pdu_data_tx_push_fn_t s_orig_lld_pdu_data_tx_push;
 
 /* The incoming-LL drain we replace (slot 603), saved so we can chain it. */
 static r_lld_pdu_rx_handler_fn_t s_orig_lld_pdu_rx_handler;
+
+/* The scan-start we replace (slot 576), saved so we can chain it. */
+static r_lld_scan_start_hack_fn_t s_orig_lld_scan_start;
 
 /* Our replacement for hci_look_for_cmd_desc_hack. The ROM calls it while packing
  * a Command Complete and stamps status 0x01 over the reply when it comes back
@@ -137,6 +141,15 @@ static void unchained_lld_pdu_rx_handler(int32_t lld_env, uint8_t nb_rx)
     s_orig_lld_pdu_rx_handler(lld_env, nb_rx);
 }
 
+/* Our replacement for r_lld_scan_start: let the ROM set the scan up with the
+ * full channel map, then re-apply the channel pin (a no-op unless one is set). */
+static int32_t unchained_lld_scan_start(int32_t scan_par, int32_t pdu)
+{
+    int32_t evt = s_orig_lld_scan_start(scan_par, pdu);
+    scan_pin_on_scan_start();
+    return evt;
+}
+
 void bt_unchained_init(void)
 {
     // Validate that the required function pointers are available
@@ -174,4 +187,8 @@ void bt_unchained_init(void)
     // Tap incoming LL: installed once, gated by the traffic monitor flags
     s_orig_lld_pdu_rx_handler = r_ip_funcs_p->lld_pdu_rx_handler;
     r_ip_funcs_p->lld_pdu_rx_handler = &unchained_lld_pdu_rx_handler;
+
+    // Re-apply the scan channel pin after each scan starts
+    s_orig_lld_scan_start = r_ip_funcs_p->lld_scan_start_hack;
+    r_ip_funcs_p->lld_scan_start_hack = &unchained_lld_scan_start;
 }
