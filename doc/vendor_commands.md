@@ -56,15 +56,19 @@ Fewer than 6 bytes returns `0x12` Invalid HCI Command Parameters.
 | :----- | :--- | :---- |
 | 0      | 1    | Flags |
 
-| Flag   | Source                   | State       |
-| :----- | :----------------------- | :---------- |
-| `0x01` | Outgoing BR/EDR LMP PDUs | implemented |
-| `0x02` | Incoming BR/EDR LMP PDUs | implemented |
-| `0x04` | Outgoing BLE LL PDUs     | reserved    |
-| `0x08` | Incoming BLE LL PDUs     | reserved    |
+| Flag   | Source                        | State       |
+| :----- | :---------------------------- | :---------- |
+| `0x01` | Outgoing BR/EDR LMP PDUs      | implemented |
+| `0x02` | Incoming BR/EDR LMP PDUs      | implemented |
+| `0x04` | Outgoing BLE LL data PDUs     | implemented |
+| `0x08` | Incoming BLE LL PDUs          | implemented |
 
 Flags combine; `0x00` disables every source.
 Each captured PDU is reported as a `0xFF` event.
+
+`0x08` captures every incoming LL PDU, data and control (LLCP). `0x04` captures
+outgoing LL *data* only: outgoing LLCP is queued to the baseband below the tap,
+so it is not captured, though the peer's replies to it still arrive on `0x08`.
 
 Returns status.
 An empty parameter returns `0x12` Invalid HCI Command Parameters.

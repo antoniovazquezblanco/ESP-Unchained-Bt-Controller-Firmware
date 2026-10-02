@@ -15,18 +15,23 @@
 #include "hci_desc_tabs.h"
 
 /*
- * Monitor flags, the SET_TRAFFIC_MONITOR parameter byte. BR/EDR LMP TX and RX
- * are implemented; the LE LL sources are reserved so the wire flag values stay
- * stable as the capture surface grows, and are rejected until they have a hook
- * behind them.
+ * Monitor flags, the SET_TRAFFIC_MONITOR parameter byte. BR/EDR LMP and BLE LL,
+ * each direction, all have a hook behind them.
  */
 #define LMP_MONITOR_LMP_TX 0x01 /* outgoing BR/EDR LMP PDUs            */
 #define LMP_MONITOR_LMP_RX 0x02 /* incoming BR/EDR LMP PDUs            */
-#define LMP_MONITOR_LL_TX 0x04  /* outgoing BLE LL PDUs (reserved)     */
-#define LMP_MONITOR_LL_RX 0x08  /* incoming BLE LL PDUs (reserved)     */
+#define LMP_MONITOR_LL_TX 0x04  /* outgoing BLE LL data PDUs          */
+#define LMP_MONITOR_LL_RX 0x08  /* incoming BLE LL PDUs               */
 
+/*
+ * LL_RX captures every incoming LL PDU (data and control); LL_TX captures
+ * outgoing LL *data* only. Outgoing LL control (LLCP) is queued straight to
+ * the baseband by llc_llcp_send, which is not one of the lld_pdu push slots we
+ * can hook, so it does not pass our TX tap -- the peer's replies still show on
+ * LL_RX.
+ */
 /* Everything a hook exists for; a request outside this is UNSUPPORTED_FEATURE. */
-#define LMP_MONITOR_SUPPORTED (LMP_MONITOR_LMP_TX | LMP_MONITOR_LMP_RX)
+#define LMP_MONITOR_SUPPORTED (LMP_MONITOR_LMP_TX | LMP_MONITOR_LMP_RX | LMP_MONITOR_LL_TX | LMP_MONITOR_LL_RX)
 
 /*
  * Capture event layout, carried in the 0xFF vendor event after code and length.
@@ -67,6 +72,22 @@ void lmp_monitor_on_lmp_tx(uint32_t link_id, const bt_em_lmp_buf_elt_t *buf_elt)
  * is a no-op otherwise.
  */
 void lmp_monitor_on_lmp_rx(const uint8_t *pdu, uint8_t pdu_len);
+
+/*
+ * The outgoing-LL tap. esp32_bt_unchained wires it into the lld_pdu_data_tx_push
+ * slot; pass the TX descriptor the ROM is about to queue. It captures the PDU
+ * when LL_TX is enabled and is a no-op otherwise. Called before the ROM handler
+ * runs, so the descriptor still describes this PDU.
+ */
+void lmp_monitor_on_ll_tx(int32_t tx_desc);
+
+/*
+ * The incoming-LL tap. esp32_bt_unchained wires it into the lld_pdu_rx_handler
+ * slot, which drains the BLE RX ring. Pass the PDU count the handler was given;
+ * it reads the descriptor ring before the ROM frees the buffers, captures each
+ * PDU when LL_RX is enabled, and is a no-op otherwise.
+ */
+void lmp_monitor_on_ll_rx(uint8_t nb_rx);
 
 /*
  * Command descriptor for our vendor event code (0xFF), so the ROM packs the

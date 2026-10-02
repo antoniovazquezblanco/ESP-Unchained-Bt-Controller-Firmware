@@ -32,6 +32,12 @@ static r_ld_acl_lmp_tx_fn_t s_orig_ld_acl_lmp_tx;
 /* The incoming-LMP unpacker we replace (slot 21), saved so we can chain it. */
 static r_lmp_unpack_fn_t s_orig_lmp_unpack;
 
+/* The outgoing-LL submit we replace (slot 596), saved so we can chain it. */
+static r_lld_pdu_data_tx_push_fn_t s_orig_lld_pdu_data_tx_push;
+
+/* The incoming-LL drain we replace (slot 603), saved so we can chain it. */
+static r_lld_pdu_rx_handler_fn_t s_orig_lld_pdu_rx_handler;
+
 /* Our replacement for hci_look_for_cmd_desc_hack. The ROM calls it while packing
  * a Command Complete and stamps status 0x01 over the reply when it comes back
  * empty, so our own commands have to answer with a descriptor. Everything else
@@ -114,6 +120,23 @@ static uint8_t unchained_lmp_unpack(uint8_t *out, uint8_t *in, uint8_t *len)
     return status;
 }
 
+/* Our replacement for r_lld_pdu_data_tx_push: tap the outgoing LL PDU (a no-op
+ * unless monitoring is on) while the descriptor still describes it, then run the
+ * real handler unchanged. */
+static void unchained_lld_pdu_data_tx_push(int32_t lld_env, int32_t tx_desc, uint8_t prog)
+{
+    lmp_monitor_on_ll_tx(tx_desc);
+    s_orig_lld_pdu_data_tx_push(lld_env, tx_desc, prog);
+}
+
+/* Our replacement for r_lld_pdu_rx_handler: tap the received LL PDUs before the
+ * real handler drains the ring and frees their buffers. */
+static void unchained_lld_pdu_rx_handler(int32_t lld_env, uint8_t nb_rx)
+{
+    lmp_monitor_on_ll_rx(nb_rx);
+    s_orig_lld_pdu_rx_handler(lld_env, nb_rx);
+}
+
 void bt_unchained_init(void)
 {
     // Validate that the required function pointers are available
@@ -143,4 +166,12 @@ void bt_unchained_init(void)
     // Tap incoming LMP: installed once, gated by the traffic monitor flags
     s_orig_lmp_unpack = r_ip_funcs_p->lmp_unpack;
     r_ip_funcs_p->lmp_unpack = &unchained_lmp_unpack;
+
+    // Tap outgoing LL: installed once, gated by the traffic monitor flags
+    s_orig_lld_pdu_data_tx_push = r_ip_funcs_p->lld_pdu_data_tx_push;
+    r_ip_funcs_p->lld_pdu_data_tx_push = &unchained_lld_pdu_data_tx_push;
+
+    // Tap incoming LL: installed once, gated by the traffic monitor flags
+    s_orig_lld_pdu_rx_handler = r_ip_funcs_p->lld_pdu_rx_handler;
+    r_ip_funcs_p->lld_pdu_rx_handler = &unchained_lld_pdu_rx_handler;
 }
