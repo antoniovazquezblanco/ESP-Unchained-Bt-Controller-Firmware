@@ -12,6 +12,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "ble_ll.h"
 #include "sdk_config.h"
 
 /* ---- Company Identifier (manufacturer id) ---- */
