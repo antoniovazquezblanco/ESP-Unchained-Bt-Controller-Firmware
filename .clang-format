@@ -1,0 +1,33 @@
+# Project C formatting. Kept close to the existing hand-written style so that
+# VS Code (clang-format) and manual edits agree. clang-format >= 14.
+BasedOnStyle: LLVM
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+ColumnLimit: 0
+PointerAlignment: Right
+SpaceBeforeParens: ControlStatements
+AlignTrailingComments: true
+SortIncludes: false
+AllowShortFunctionsOnASingleLine: None
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+AllowShortCaseLabelsOnASingleLine: false
+IndentCaseLabels: false
+KeepEmptyLinesAtTheStartOfBlocks: false
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterFunction: true
+  AfterStruct: true
+  AfterUnion: true
+  AfterEnum: true
+  AfterClass: true
+  AfterNamespace: true
+  AfterControlStatement: Never
+  AfterCaseLabel: false
+  BeforeElse: false
+  BeforeWhile: false
+  BeforeCatch: false
+  IndentBraces: false
+  SplitEmptyFunction: true
+  SplitEmptyRecord: true
