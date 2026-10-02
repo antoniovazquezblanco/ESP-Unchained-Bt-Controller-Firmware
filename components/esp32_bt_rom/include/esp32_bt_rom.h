@@ -14,6 +14,7 @@
 #include "bt_em_buf.h"
 #include "hci_desc_tabs.h"
 #include "ld_env.h"
+#include "lld_pdu_desc.h"
 #include "lmp_desc_tab.h"
 #include "r_ip_funcs.h"
 #include "r_modules_funcs.h"
