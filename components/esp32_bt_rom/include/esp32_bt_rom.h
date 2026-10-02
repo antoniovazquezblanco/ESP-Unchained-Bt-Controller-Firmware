@@ -2,7 +2,7 @@
  * SPDX-FileCopyrightText: 2026 Antonio Vázquez Blanco <antoniovazquezblanco@gmail.com>
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
- * ESP32 classic (BR/EDR) Bluetooth controller ROM glue.
+ * ESP32 Bluetooth controller (BR/EDR + BLE) ROM glue: the aggregate header.
  */
 
 #ifndef ESP32_BT_ROM_H
@@ -11,14 +11,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "bt_em_buf.h"
-#include "hci_desc_tabs.h"
-#include "ld_env.h"
-#include "lld_pdu_desc.h"
-#include "lld_scan.h"
-#include "lmp_desc_tab.h"
-#include "r_ip_funcs.h"
-#include "r_modules_funcs.h"
+#include "hal/hal.h"
+#include "rom/rom.h"
 
 /*
  * ke_msg id the ROM uses to allocate an HCI Command Complete event. Pass it to

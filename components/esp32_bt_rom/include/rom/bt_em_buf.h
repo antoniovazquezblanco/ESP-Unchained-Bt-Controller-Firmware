@@ -11,11 +11,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-/** RivieraWaves intrusive singly-linked list header (ip/common/co_list.h). */
-typedef struct co_list_hdr
-{
-    struct co_list_hdr *next;
-} co_list_hdr_t;
+#include "rom/co.h"
 
 /**
  * An outgoing BR/EDR LMP PDU buffer element, as handed to ld_acl_lmp_tx.
@@ -26,9 +22,9 @@ typedef struct co_list_hdr
  */
 typedef struct
 {
-    co_list_hdr_t hdr; /**< +0: list chaining while queued for TX */
-    uint16_t buf_ptr;  /**< +4: EM offset of the LMP PDU bytes    */
-    uint8_t length;    /**< +6: PDU length in bytes               */
+    struct co_list_hdr hdr; /**< +0: list chaining while queued for TX */
+    uint16_t buf_ptr;       /**< +4: EM offset of the LMP PDU bytes    */
+    uint8_t length;         /**< +6: PDU length in bytes               */
 } bt_em_lmp_buf_elt_t;
 
 _Static_assert(offsetof(bt_em_lmp_buf_elt_t, buf_ptr) == 4, "buf_ptr must be at +4");

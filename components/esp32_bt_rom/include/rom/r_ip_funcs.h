@@ -12,9 +12,9 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "bt_em_buf.h"
+#include "rom/bt_em_buf.h"
 #include "hci.h"
-#include "hci_desc_tabs.h"
+#include "rom/hci_desc_tabs.h"
 
 /**
  * Signature of r_bt_util_buf_init, slot 0 of the IP functions table.
