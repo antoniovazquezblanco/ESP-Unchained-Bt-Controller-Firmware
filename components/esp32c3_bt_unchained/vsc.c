@@ -19,6 +19,7 @@
 
 #include "esp32c3_bt_rom.h"
 #include "hci.h"
+#include "scan_pin.h"
 #include "traffic_monitor.h"
 
 #ifndef ESP32C3_BT_UNCHAINED_BOARD
@@ -49,6 +50,7 @@ static void vs_info(uint16_t opcode, uint16_t length, const uint8_t *payload);
 static void vs_supported_cmds(uint16_t opcode, uint16_t length, const uint8_t *payload);
 static void vs_set_bdaddr(uint16_t opcode, uint16_t length, const uint8_t *payload);
 static void vs_set_traffic_monitor(uint16_t opcode, uint16_t length, const uint8_t *payload);
+static void vs_set_scan_channel(uint16_t opcode, uint16_t length, const uint8_t *payload);
 
 /* The table of vendor-specific commands, mapping opcodes to their handlers. */
 static const vs_cmd_t s_vs_cmds[] = {
@@ -56,6 +58,7 @@ static const vs_cmd_t s_vs_cmds[] = {
     {HCI_OPCODE(HCI_OGF_VENDOR, UNCHAINED_VS_SUPPORTED_CMDS_OCF), vs_supported_cmds},
     {HCI_OPCODE(HCI_OGF_VENDOR, UNCHAINED_VS_SET_BDADDR_OCF), vs_set_bdaddr},
     {HCI_OPCODE(HCI_OGF_VENDOR, UNCHAINED_VS_SET_TRAFFIC_MONITOR_OCF), vs_set_traffic_monitor},
+    {HCI_OPCODE(HCI_OGF_VENDOR, UNCHAINED_VS_SET_SCAN_CHANNEL_OCF), vs_set_scan_channel},
 };
 
 /*
@@ -168,6 +171,20 @@ static void vs_set_traffic_monitor(uint16_t opcode, uint16_t length, const uint8
         return;
     }
     traffic_monitor_set(payload[0]);
+    vs_cmd_complete_status(opcode, HCI_SUCCESS);
+}
+
+/* 0xFC04 SET_SCAN_CHANNEL: pin scanning to one primary channel (scan_pin.h). */
+static void vs_set_scan_channel(uint16_t opcode, uint16_t length, const uint8_t *payload)
+{
+    if (length < 1) {
+        vs_cmd_complete_status(opcode, HCI_ERR_INVALID_PARAMS);
+        return;
+    }
+    if (!scan_pin_set(payload[0])) {
+        vs_cmd_complete_status(opcode, HCI_ERR_INVALID_PARAMS);
+        return;
+    }
     vs_cmd_complete_status(opcode, HCI_SUCCESS);
 }
 

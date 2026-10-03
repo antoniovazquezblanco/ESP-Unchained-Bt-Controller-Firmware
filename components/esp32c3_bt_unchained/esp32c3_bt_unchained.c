@@ -34,6 +34,7 @@
 #include "sdkconfig.h"
 
 #include "esp32c3_bt_rom.h"
+#include "scan_pin.h"
 #include "traffic_monitor.h"
 #include "vsc.h"
 
@@ -62,6 +63,10 @@ static r_lld_con_rx_llcp_check_fn_t s_orig_lld_con_rx_llcp_check;
  * +0x368), saved so we can chain them; tapped for the LL TX traffic monitor. */
 static r_lld_con_tx_fn_t s_orig_lld_con_data_tx;
 static r_lld_con_tx_fn_t s_orig_lld_con_llcp_tx;
+
+/* The scan scheduler we replace (r_ip_funcs slot +0x430), saved so we can chain
+ * it; used to pin advertising reception to one primary channel. */
+static r_lld_scan_sched_fn_t s_orig_lld_scan_sched;
 
 /* Our replacement for the HCI command ingress: our vendor group is ours, every
  * other command stays with the controller. */
@@ -121,6 +126,14 @@ static uint8_t unchained_lld_con_llcp_tx(uint32_t link_id, void *tx_elem)
     return s_orig_lld_con_llcp_tx(link_id, tx_elem);
 }
 
+/* Our replacement for the scan scheduler: re-apply the channel pin (a no-op unless
+ * one is set) before the controller sets up the next scan window. */
+static void unchained_lld_scan_sched(uint32_t scan_idx, uint32_t param2, uint32_t param3)
+{
+    scan_pin_on_scan_sched(scan_idx);
+    s_orig_lld_scan_sched(scan_idx, param2, param3);
+}
+
 #if defined(__has_include) && __has_include("esp_bt_vs.h")
 #define HAVE_VS_ENABLE 1
 #endif
@@ -177,6 +190,10 @@ void bt_unchained_init(void)
     r_ip_funcs_p->lld_con_data_tx = &unchained_lld_con_data_tx;
     s_orig_lld_con_llcp_tx = r_ip_funcs_p->lld_con_llcp_tx;
     r_ip_funcs_p->lld_con_llcp_tx = &unchained_lld_con_llcp_tx;
+
+    /* Re-apply the scan channel pin on each scan window (a no-op unless pinned). */
+    s_orig_lld_scan_sched = r_ip_funcs_p->lld_scan_sched;
+    r_ip_funcs_p->lld_scan_sched = &unchained_lld_scan_sched;
 
     /* Re-brand the controller with an identifiable company id. */
     sdk_cfg_priv_opts.company_id = UNCHAINED_COMPID;

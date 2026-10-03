@@ -26,11 +26,14 @@
  * SET_BDADDR      0xFC02  in: 6-byte BD_ADDR; out: nothing.
  * SET_TRAFFIC_MONITOR 0xFC03  in: 1-byte flag bitmask (TRAFFIC_MONITOR_* in
  *                         traffic_monitor.h), 0 disables; out: nothing.
+ * SET_SCAN_CHANNEL 0xFC04  in: 1-byte channel (37/38/39 to pin, 0 to restore the
+ *                         three-channel hop); out: nothing.
  */
 #define UNCHAINED_VS_INFO_OCF 0x000                /* 0xFC00 */
 #define UNCHAINED_VS_SUPPORTED_CMDS_OCF 0x001      /* 0xFC01 */
 #define UNCHAINED_VS_SET_BDADDR_OCF 0x002          /* 0xFC02 */
 #define UNCHAINED_VS_SET_TRAFFIC_MONITOR_OCF 0x003 /* 0xFC03 */
+#define UNCHAINED_VS_SET_SCAN_CHANNEL_OCF 0x004    /* 0xFC04 */
 
 /* True when opcode is one of ours (so the hci_cmd_received hook routes it here
  * instead of chaining the controller). */
