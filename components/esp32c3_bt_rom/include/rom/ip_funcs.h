@@ -29,6 +29,9 @@ typedef uint32_t (*r_lld_con_rx_llcp_check_fn_t)(uint32_t link_id, void *con_env
 /* Queue an outgoing connection PDU (data via lld_con_data_tx, control via
  * lld_con_llcp_tx); tx_elem is an lld_tx_elem_t (rom/lld.h). */
 typedef uint8_t (*r_lld_con_tx_fn_t)(uint32_t link_id, void *tx_elem);
+/* Schedule the next scan window for scan activity scan_idx; reads the sub-env's
+ * primary-channel index (lld_scan_sub_env_t, rom/lld.h) into CS+4. */
+typedef void (*r_lld_scan_sched_fn_t)(uint32_t scan_idx, uint32_t param2, uint32_t param3);
 
 /*
  * The r_ip_funcs dispatch table (partial model). The true table is much larger;
@@ -51,6 +54,8 @@ typedef struct r_ip_funcs
     r_lld_con_tx_fn_t lld_con_llcp_tx; /* +0x368 queue an outgoing control (LLCP) PDU */
     uint8_t _reserved_36c[0x394 - 0x36c];
     r_lld_con_rx_llcp_check_fn_t lld_con_rx_llcp_check; /* +0x394 handle one received connection PDU */
+    uint8_t _reserved_398[0x430 - 0x398];
+    r_lld_scan_sched_fn_t lld_scan_sched; /* +0x430 schedule the next scan window */
 } r_ip_funcs_t;
 
 _Static_assert(offsetof(r_ip_funcs_t, hci_cmd_received) == 0x2c, "hci_cmd_received @ +0x2c");
@@ -61,6 +66,7 @@ _Static_assert(offsetof(r_ip_funcs_t, lld_read_clock) == 0x264, "lld_read_clock 
 _Static_assert(offsetof(r_ip_funcs_t, lld_con_data_tx) == 0x330, "lld_con_data_tx @ +0x330");
 _Static_assert(offsetof(r_ip_funcs_t, lld_con_llcp_tx) == 0x368, "lld_con_llcp_tx @ +0x368");
 _Static_assert(offsetof(r_ip_funcs_t, lld_con_rx_llcp_check) == 0x394, "lld_con_rx_llcp_check @ +0x394");
+_Static_assert(offsetof(r_ip_funcs_t, lld_scan_sched) == 0x430, "lld_scan_sched @ +0x430");
 
 /* The live table (absolute symbol r_ip_funcs_p @ 0x3fcdff8c). */
 extern r_ip_funcs_t *r_ip_funcs_p;

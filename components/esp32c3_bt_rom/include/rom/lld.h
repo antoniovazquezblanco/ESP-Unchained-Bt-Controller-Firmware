@@ -63,4 +63,25 @@ _Static_assert(offsetof(lld_env_t, rx_desc_idx) == 0xd8, "rx_desc_idx @ +0xd8");
 
 extern lld_env_t *p_lld_env;
 
+/*
+ * A scan sub-environment, one per active scan parameter set (1M / coded PHY). Only
+ * the control-structure index is modelled: it selects which CS element (em_buf_get
+ * EM_REGION_CS + cs_idx*EM_CS_STRIDE) holds this scan's registers, including the
+ * hop-control that the channel pin rewrites.
+ */
+typedef struct lld_scan_sub_env
+{
+    uint8_t _reserved_00[0x38];
+    uint8_t cs_idx; /* +0x38 control-structure index for this scan */
+} lld_scan_sub_env_t;
+
+_Static_assert(offsetof(lld_scan_sub_env_t, cs_idx) == 0x38, "scan cs_idx @ +0x38");
+
+/*
+ * The scan environment: an array of sub-env pointers, one per scan parameter set,
+ * indexed by the scan activity id lld_scan_sched receives. Absolute symbol
+ * lld_scan_env @ 0x3fcdffac; NULL before a scan starts, as are inactive slots.
+ */
+extern lld_scan_sub_env_t **lld_scan_env;
+
 #endif /* ESP32C3_ROM_LLD_H */
