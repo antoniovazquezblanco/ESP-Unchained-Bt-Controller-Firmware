@@ -10,12 +10,10 @@
 #define BT_UNCHAINED_H
 
 /*
- * Unlock whatever this target's controller has to offer. Call once, after
+ * Unlock whatever this target's controller has to offer: our own vendor command
+ * set (Company 0xF00D -- see vsc.h), which on every target includes SET_BDADDR,
+ * the link traffic monitor and the scan-channel pin. Call once, after
  * esp_bt_controller_enable().
- *
- *   esp32   -- our own vendor command set grafted over the ROM, see vsc.h.
- *   esp32c3 -- Espressif's stock vendor-specific commands.
- *   esp32c5 -- Espressif's stock vendor-specific commands and events.
  */
 void bt_unchained_init(void);
 

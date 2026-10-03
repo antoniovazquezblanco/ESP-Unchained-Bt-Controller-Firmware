@@ -15,9 +15,9 @@
 /*
  * Our vendor-specific commands. The opcodes match the classic ESP32 and the C5
  * build so one host tool drives every target. We do NOT own the whole vendor
- * group here: the C3 also enables the stock Espressif vendor commands, so only
- * our own opcodes are intercepted and the rest pass through to the controller.
- * Each replies with a Command Complete whose first return byte is status.
+ * group here: only our own opcodes are intercepted; every other opcode chains
+ * through to the controller unchanged. Each replies with a Command Complete whose
+ * first return byte is status.
  *
  * INFO            0xFC00  in: nothing; out: fw name, fw version, board name,
  *                         each a uint8 length followed by that many bytes.

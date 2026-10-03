@@ -133,7 +133,7 @@ void vsc_register(void)
         return;
     size_t count = sizeof(s_vs_cmds) / sizeof(s_vs_cmds[0]);
     /* Chain our nodes, then head-insert the chain so our opcodes resolve before
-     * any stock vendor command sharing an OCF. */
+     * any vendor command the controller may already have registered with that OCF. */
     for (size_t i = 0; i + 1 < count; i++)
         s_vs_cmds[i].next = &s_vs_cmds[i + 1];
     s_vs_cmds[count - 1].next = ble_ll_hci_env_p->vs_cmds;

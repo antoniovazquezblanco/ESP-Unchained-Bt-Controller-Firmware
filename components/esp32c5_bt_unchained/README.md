@@ -1,9 +1,7 @@
 # ESP32-C5 BT Unchained
 
-Unlocks the ESP32-C5 Bluetooth controller. It enables the stock Espressif
-vendor-specific HCI commands that a controller-only build otherwise leaves
-dormant, adds our own custom vendor command set, and taps the link layer for a
-traffic monitor and a scan-channel pin.
+Unlocks the ESP32-C5 Bluetooth controller with our own custom vendor command set,
+a link traffic monitor and a scan-channel pin.
 
 ## Features
 
