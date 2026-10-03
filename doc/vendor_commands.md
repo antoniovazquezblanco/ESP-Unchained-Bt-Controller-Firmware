@@ -37,7 +37,7 @@ Returns status, then a little-endian `uint64` bitfield where bit N is set when t
 `INFO` is bit 0.
 Commands past OCF 63 read as absent.
 
-A build with all four commands returns `00 0f 00 00 00 00 00 00 00`.
+A build with all five commands returns `00 1f 00 00 00 00 00 00 00`.
 
 ### `0xFC02` SET_BDADDR
 
@@ -68,8 +68,9 @@ Flags combine; `0x00` disables every source.
 Each captured PDU is reported as a `0xFF` event.
 
 `0x08` captures every incoming LL PDU, data and control (LLCP). `0x04` captures
-outgoing LL *data* only: outgoing LLCP is queued to the baseband below the tap,
-so it is not captured, though the peer's replies to it still arrive on `0x08`.
+outgoing LL PDUs. On the C3 and C5 this includes outgoing control (LLCP); on the
+classic ESP32 only outgoing *data* is captured, because its outgoing LLCP is queued
+to the baseband below the tap — the peer's replies still arrive on `0x08`.
 
 Returns status.
 An empty parameter returns `0x12` Invalid HCI Command Parameters.
@@ -106,10 +107,16 @@ HCI Command Parameters.
 | 0      | 1    | Subcode, `0x01`                                          |
 | 1      | 1    | Direction: `0x00` TX, `0x01` RX                          |
 | 2      | 1    | Link id, `0xFF` when unknown                             |
-| 3      | 4    | Controller clock, little-endian `uint32`, 312.5 us ticks |
+| 3      | 4    | Controller clock at capture, little-endian `uint32`      |
 | 7      | 1    | PDU length                                               |
-| 8      | *n*  | The PDU, opcode byte first                               |
+| 8      | *n*  | The PDU bytes (see below)                                |
 
-The PDU length is the on-air length.
+For BR/EDR LMP the PDU is the raw LMP bytes, opcode first, and the length is the
+on-air length. For BLE LL the PDU is a reconstructed 2-byte header — LLID then
+length — followed by the payload; for a control PDU the payload begins with the
+LLCP opcode.
+
+The clock unit is the controller's native tick: 312.5 us on the classic ESP32 and
+C3 (the BT clock), the link-layer timer tick on the C5.
 RX captures report link id `0xFF`.
 Only PDUs the controller accepted are captured.

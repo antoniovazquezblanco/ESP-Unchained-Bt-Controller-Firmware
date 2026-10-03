@@ -19,6 +19,8 @@
 
 #include "esp32c5_bt_rom.h"
 #include "hci.h"
+#include "scan_pin.h"
+#include "traffic_monitor.h"
 
 #ifndef ESP32C5_BT_UNCHAINED_BOARD
 #define ESP32C5_BT_UNCHAINED_BOARD "unknown"
@@ -33,12 +35,16 @@
 static int vs_info(const uint8_t *params, uint8_t len, uint8_t *rsp, uint8_t *rsp_len);
 static int vs_supported_cmds(const uint8_t *params, uint8_t len, uint8_t *rsp, uint8_t *rsp_len);
 static int vs_set_bdaddr(const uint8_t *params, uint8_t len, uint8_t *rsp, uint8_t *rsp_len);
+static int vs_set_traffic_monitor(const uint8_t *params, uint8_t len, uint8_t *rsp, uint8_t *rsp_len);
+static int vs_set_scan_channel(const uint8_t *params, uint8_t len, uint8_t *rsp, uint8_t *rsp_len);
 
 /* The commands we register, one list node each. `next` is wired in vsc_register. */
 static ble_ll_hci_vs_cmd_t s_vs_cmds[] = {
     {.ocf = UNCHAINED_VS_INFO_OCF, .cb = vs_info},
     {.ocf = UNCHAINED_VS_SUPPORTED_CMDS_OCF, .cb = vs_supported_cmds},
     {.ocf = UNCHAINED_VS_SET_BDADDR_OCF, .cb = vs_set_bdaddr},
+    {.ocf = UNCHAINED_VS_SET_TRAFFIC_MONITOR_OCF, .cb = vs_set_traffic_monitor},
+    {.ocf = UNCHAINED_VS_SET_SCAN_CHANNEL_OCF, .cb = vs_set_scan_channel},
 };
 
 /* 0xFC00 INFO: firmware name, firmware version and board name, each prefixed by
@@ -92,6 +98,32 @@ static int vs_set_bdaddr(const uint8_t *params, uint8_t len, uint8_t *rsp, uint8
     if (len < BD_ADDR_LEN)
         return HCI_ERR_INVALID_PARAMS;
     r_esp_ble_ll_set_public_addr(params);
+    return HCI_SUCCESS;
+}
+
+/* 0xFC03 SET_TRAFFIC_MONITOR: enable/disable low-level LL PDU reporting. */
+static int vs_set_traffic_monitor(const uint8_t *params, uint8_t len, uint8_t *rsp, uint8_t *rsp_len)
+{
+    (void)rsp;
+    *rsp_len = 0;
+    if (len < 1)
+        return HCI_ERR_INVALID_PARAMS;
+    if ((params[0] & ~TRAFFIC_MONITOR_SUPPORTED) != 0)
+        /* A flag bit we have no hook for -- refuse rather than silently drop it. */
+        return HCI_ERR_UNSUPPORTED_FEATURE;
+    traffic_monitor_set(params[0]);
+    return HCI_SUCCESS;
+}
+
+/* 0xFC04 SET_SCAN_CHANNEL: pin scanning to one primary channel (scan_pin.h). */
+static int vs_set_scan_channel(const uint8_t *params, uint8_t len, uint8_t *rsp, uint8_t *rsp_len)
+{
+    (void)rsp;
+    *rsp_len = 0;
+    if (len < 1)
+        return HCI_ERR_INVALID_PARAMS;
+    if (!scan_pin_set(params[0]))
+        return HCI_ERR_INVALID_PARAMS;
     return HCI_SUCCESS;
 }
 

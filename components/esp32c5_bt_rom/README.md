@@ -15,11 +15,19 @@ include/
                        ble_ll_hci_env_p        vendor-command list head @ +0x34
                        ble_ll_hci_vs_cmd_t     list node {ocf, cb, next}
                        r_esp_ble_ll_set_public_addr   public-address setter
+                       ble_ll_env_p            LL env; forced-scan-channel @ +0x38
+                       r_os_mbuf_copydata      read PDU bytes from an mbuf chain
+                       r_ble_hci_trans_buf_alloc / _free   HCI event buffers
+                       r_ble_ll_hci_event_send         emit an event to the host
+                       r_ble_lll_timer_current_tick_get  capture timestamp
   sdk_config.h       priv_config_opts (company_id @ +0, via priv_config_opts_ptr)
 ```
 
 `esp32c5_bt_unchained` head-inserts static `ble_ll_hci_vs_cmd_t` nodes into the
 controller's vendor-command list to add the custom commands, and uses
 `r_esp_ble_ll_set_public_addr` for SET_BDADDR. The controller auto-packs the
-Command Complete from each handler's return status, so the handlers are thin.
-See `reversing/esp32c5-bt-rom.md` for the full map.
+Command Complete from each handler's return status, so the handlers are thin. The
+traffic monitor and scan pin build on the second group of symbols: the monitor
+reads PDUs with `r_os_mbuf_copydata` and emits them with the HCI-event helpers;
+the scan pin pokes the forced-scan-channel byte at `ble_ll_env_p + 0x38`. See
+`reversing/esp32c5-bt-rom.md` for the full map.
