@@ -2,7 +2,10 @@
  * SPDX-FileCopyrightText: 2026 Antonio Vázquez Blanco <antoniovazquezblanco@gmail.com>
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
- * Our vendor-specific HCI command set.
+ * Our vendor-specific HCI command set for the classic ESP32. The opcodes and their
+ * contracts are shared across targets (unchained_vsc.h); this header adds only the
+ * ESP32 dispatch glue. We own the whole vendor group: our opcodes are handled here
+ * and every other vendor opcode answers "Unknown HCI Command".
  */
 
 #ifndef VSC_H
@@ -11,67 +14,7 @@
 #include <stdint.h>
 
 #include "esp32_bt_rom.h"
-#include "hci.h"
-
-/*
- * Our vendor-specific commands, numbered from the base of the vendor group up.
- * We own the whole group: these are handled here, every other vendor opcode
- * answers "Unknown HCI Command". Each replies with a standard Command Complete
- * whose first return byte is status.
- */
-
-/*
- * INFO: identify this build.
- *
- * in:  nothing
- * out: status, then firmware name, firmware version and board name, each a
- *      uint8 length followed by that many bytes.
- */
-#define UNCHAINED_VS_INFO_OCF 0x000
-#define UNCHAINED_VS_INFO_OPCODE HCI_OPCODE(HCI_OGF_VENDOR, UNCHAINED_VS_INFO_OCF) /* 0xFC00 */
-
-/*
- * SUPPORTED_CMDS: report which vendor commands this build implements.
- *
- * in:  nothing
- * out: status, then a little-endian uint64 bitfield: bit N is set when the
- *      command with OCF N is implemented, so INFO is bit 0. Commands past OCF
- *      63 are not representable and are reported as absent.
- */
-#define UNCHAINED_VS_SUPPORTED_CMDS_OCF 0x001
-#define UNCHAINED_VS_SUPPORTED_CMDS_OPCODE HCI_OPCODE(HCI_OGF_VENDOR, UNCHAINED_VS_SUPPORTED_CMDS_OCF) /* 0xFC01 */
-
-/*
- * SET_BDADDR: override the controller public address.
- *
- * in:  6-byte BD_ADDR
- * out: status; INVALID_PARAMS if fewer than 6 bytes were given.
- */
-#define UNCHAINED_VS_SET_BDADDR_OCF 0x002
-#define UNCHAINED_VS_SET_BDADDR_OPCODE HCI_OPCODE(HCI_OGF_VENDOR, UNCHAINED_VS_SET_BDADDR_OCF) /* 0xFC02 */
-
-/*
- * SET_TRAFFIC_MONITOR: report low-level link traffic to the host as vendor
- * events (0xFF), see lmp_monitor.h.
- *
- * in:  1-byte flag bitmask (LMP_MONITOR_* in lmp_monitor.h). 0 disables all.
- * out: status; INVALID_PARAMS if no byte was given, UNSUPPORTED_FEATURE if a
- *      reserved (not-yet-implemented) flag bit is set.
- */
-#define UNCHAINED_VS_SET_TRAFFIC_MONITOR_OCF 0x003
-#define UNCHAINED_VS_SET_TRAFFIC_MONITOR_OPCODE \
-    HCI_OPCODE(HCI_OGF_VENDOR, UNCHAINED_VS_SET_TRAFFIC_MONITOR_OCF) /* 0xFC03 */
-
-/*
- * SET_SCAN_CHANNEL: pin advertising reception (scanning) to one primary channel
- * instead of hopping 37/38/39.
- *
- * in:  1-byte channel: 37, 38 or 39 to pin, 0 to restore the three-channel hop.
- * out: status; INVALID_PARAMS if no byte was given or it is not 0/37/38/39.
- */
-#define UNCHAINED_VS_SET_SCAN_CHANNEL_OCF 0x004
-#define UNCHAINED_VS_SET_SCAN_CHANNEL_OPCODE \
-    HCI_OPCODE(HCI_OGF_VENDOR, UNCHAINED_VS_SET_SCAN_CHANNEL_OCF) /* 0xFC04 */
+#include "unchained_vsc.h"
 
 /*
  * The command descriptor the ROM needs to pack a Command Complete for one of our

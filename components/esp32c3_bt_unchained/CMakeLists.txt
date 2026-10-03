@@ -9,8 +9,7 @@ else()
 endif()
 
 idf_component_register(SRCS "esp32c3_bt_unchained.c" "vsc.c" "traffic_monitor.c" "scan_pin.c"
-                       INCLUDE_DIRS "include"
-                       PRIV_REQUIRES bt bt_protocols esp32c3_bt_rom esp_app_format
+                       PRIV_REQUIRES bt_unchained bt bt_protocols esp32c3_bt_rom esp_app_format
                        REQUIRED_IDF_TARGETS esp32c3)
 
 target_compile_definitions(${COMPONENT_LIB} PRIVATE "ESP32C3_BT_UNCHAINED_BOARD=\"${_esp32c3_bt_unchained_board}\"")

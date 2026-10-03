@@ -41,7 +41,7 @@ static void monitor_emit(uint8_t direction, uint8_t link_id,
         return;
     }
     uint32_t clock = r_ip_funcs_p->ld_read_clock();
-    p[0] = LMP_MONITOR_EVT_SUBCODE;
+    p[0] = TRAFFIC_MONITOR_EVT_SUBCODE;
     p[1] = direction;
     p[2] = link_id;
     p[3] = (uint8_t)clock;
@@ -58,20 +58,20 @@ static void monitor_emit(uint8_t direction, uint8_t link_id,
 
 void lmp_monitor_on_lmp_tx(uint32_t link_id, const bt_em_lmp_buf_elt_t *buf_elt)
 {
-    if ((s_flags & LMP_MONITOR_LMP_TX) == 0 || buf_elt == NULL) {
+    if ((s_flags & TRAFFIC_MONITOR_LMP_TX) == 0 || buf_elt == NULL) {
         return;
     }
     const uint8_t *pdu = r_ip_funcs_p->em_buf_tx_buff_addr_get(buf_elt);
-    monitor_emit(LMP_MONITOR_DIR_TX, (uint8_t)link_id, pdu, buf_elt->length, NULL, 0);
+    monitor_emit(TRAFFIC_MONITOR_DIR_TX, (uint8_t)link_id, pdu, buf_elt->length, NULL, 0);
 }
 
 void lmp_monitor_on_lmp_rx(const uint8_t *pdu, uint8_t pdu_len)
 {
-    if ((s_flags & LMP_MONITOR_LMP_RX) == 0 || pdu == NULL || pdu_len == 0) {
+    if ((s_flags & TRAFFIC_MONITOR_LMP_RX) == 0 || pdu == NULL || pdu_len == 0) {
         return;
     }
     /* lmp_unpack has no link id to give us, so RX reports the sentinel. */
-    monitor_emit(LMP_MONITOR_DIR_RX, LMP_MONITOR_LINK_ID_UNKNOWN, pdu, pdu_len, NULL, 0);
+    monitor_emit(TRAFFIC_MONITOR_DIR_RX, TRAFFIC_MONITOR_LINK_ID_UNKNOWN, pdu, pdu_len, NULL, 0);
 }
 
 /* A BLE LL data-channel PDU is a 2-byte header then payload. The header's low 2
@@ -87,23 +87,23 @@ static void ll_emit(uint8_t direction, uint8_t hdr0, uint8_t length, const uint8
         return;
     }
     const uint8_t header[2] = {hdr0, length};
-    monitor_emit(direction, LMP_MONITOR_LINK_ID_UNKNOWN, header, sizeof(header), payload, length);
+    monitor_emit(direction, TRAFFIC_MONITOR_LINK_ID_UNKNOWN, header, sizeof(header), payload, length);
 }
 
 void lmp_monitor_on_ll_tx(const struct em_desc_node *tx_desc)
 {
-    if ((s_flags & LMP_MONITOR_LL_TX) == 0 || tx_desc == NULL || tx_desc->length == 0) {
+    if ((s_flags & TRAFFIC_MONITOR_LL_TX) == 0 || tx_desc == NULL || tx_desc->length == 0) {
         return;
     }
     /* The payload sits in exchange memory at an offset the descriptor carries;
      * llid and length rebuild the 2-byte LL header the ROM will put on air. */
     const uint8_t *payload = (const uint8_t *)em + tx_desc->buffer_ptr;
-    ll_emit(LMP_MONITOR_DIR_TX, tx_desc->llid, tx_desc->length, payload);
+    ll_emit(TRAFFIC_MONITOR_DIR_TX, tx_desc->llid, tx_desc->length, payload);
 }
 
 void lmp_monitor_on_ll_rx(uint8_t nb_rx)
 {
-    if ((s_flags & LMP_MONITOR_LL_RX) == 0) {
+    if ((s_flags & TRAFFIC_MONITOR_LL_RX) == 0) {
         return;
     }
     /* The ROM is about to drain nb_rx buffers starting at the current RX index,
@@ -117,7 +117,7 @@ void lmp_monitor_on_ll_rx(uint8_t nb_rx)
             continue; /* empty PDU (keepalive); nothing to capture */
         }
         const uint8_t *payload = (const uint8_t *)r_ip_funcs_p->em_buf_rx_buff_addr_get(idx);
-        ll_emit(LMP_MONITOR_DIR_RX, (uint8_t)hdr, length, payload);
+        ll_emit(TRAFFIC_MONITOR_DIR_RX, (uint8_t)hdr, length, payload);
     }
 }
 

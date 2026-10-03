@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * Low-level link traffic monitor: reports controller LMP/LL PDUs to the host as
- * vendor-specific HCI events, driven by the SET_TRAFFIC_MONITOR command.
+ * the shared 0xFF capture event (capture_event.h), driven by SET_TRAFFIC_MONITOR.
  */
 
 #ifndef LMP_MONITOR_H
@@ -11,47 +11,25 @@
 
 #include <stdint.h>
 
+#include "capture_event.h"
 #include "rom/bt_em_buf.h"
 #include "rom/hci_desc_tabs.h"
 
-/*
- * Monitor flags, the SET_TRAFFIC_MONITOR parameter byte. BR/EDR LMP and BLE LL,
- * each direction, all have a hook behind them.
- */
-#define LMP_MONITOR_LMP_TX 0x01 /* outgoing BR/EDR LMP PDUs            */
-#define LMP_MONITOR_LMP_RX 0x02 /* incoming BR/EDR LMP PDUs            */
-#define LMP_MONITOR_LL_TX 0x04  /* outgoing BLE LL data PDUs          */
-#define LMP_MONITOR_LL_RX 0x08  /* incoming BLE LL PDUs               */
+/* Capture sources this target can report (the SET_TRAFFIC_MONITOR mask the handler
+ * accepts). The classic ESP32 is the only dual-mode target, so it alone implements
+ * the BR/EDR LMP sources in addition to the BLE LL ones. */
+#define TRAFFIC_MONITOR_SUPPORTED \
+    (TRAFFIC_MONITOR_LMP_TX | TRAFFIC_MONITOR_LMP_RX | TRAFFIC_MONITOR_LL_TX | TRAFFIC_MONITOR_LL_RX)
 
 /*
- * LL_RX captures every incoming LL PDU (data and control); LL_TX captures
- * outgoing LL *data* only. Outgoing LL control (LLCP) is queued straight to
- * the baseband by llc_llcp_send, which is not one of the lld_pdu push slots we
- * can hook, so it does not pass our TX tap -- the peer's replies still show on
- * LL_RX.
+ * TRAFFIC_MONITOR_LL_RX captures every incoming LL PDU (data and control, LLCP);
+ * TRAFFIC_MONITOR_LL_TX captures outgoing LL *data* only. Outgoing LL control is
+ * queued straight to the baseband by llc_llcp_send, which is not one of the
+ * lld_pdu push slots we can hook, so it does not pass our TX tap -- the peer's
+ * replies still show on LL_RX.
  */
-/* Everything a hook exists for; a request outside this is UNSUPPORTED_FEATURE. */
-#define LMP_MONITOR_SUPPORTED (LMP_MONITOR_LMP_TX | LMP_MONITOR_LMP_RX | LMP_MONITOR_LL_TX | LMP_MONITOR_LL_RX)
 
-/*
- * Capture event layout, carried in the 0xFF vendor event after code and length.
- *
- *   [0] subcode = LMP_MONITOR_EVT_SUBCODE, namespaces this under the 0xFF event
- *   [1] direction: 0 = TX (controller -> peer), 1 = RX
- *   [2] link id, or LMP_MONITOR_LINK_ID_UNKNOWN when the tap cannot supply one
- *   [3..6] controller clock at capture (little-endian uint32, 312.5 us ticks)
- *   [7] PDU length
- *   [8..] the raw LMP/LL PDU bytes
- */
-#define LMP_MONITOR_EVT_SUBCODE 0x01
-#define LMP_MONITOR_DIR_TX 0x00
-#define LMP_MONITOR_DIR_RX 0x01
-
-/* The RX tap (lmp_unpack) carries no link id in its arguments, so RX captures
- * report this sentinel instead of a real link. */
-#define LMP_MONITOR_LINK_ID_UNKNOWN 0xFF
-
-/** Enable the capture sources named by flags (LMP_MONITOR_*); 0 disables all. */
+/** Enable the capture sources named by flags (TRAFFIC_MONITOR_*); 0 disables all. */
 void lmp_monitor_set(uint8_t flags);
 
 /** The currently enabled capture sources. */

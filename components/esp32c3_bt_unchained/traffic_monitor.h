@@ -3,7 +3,8 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * Low-level link traffic monitor for the ESP32-C3: reports controller LL PDUs to
- * the host as vendor-specific HCI events, driven by SET_TRAFFIC_MONITOR.
+ * the host as the shared 0xFF capture event (capture_event.h), driven by
+ * SET_TRAFFIC_MONITOR.
  */
 
 #ifndef TRAFFIC_MONITOR_H
@@ -11,33 +12,12 @@
 
 #include <stdint.h>
 
+#include "capture_event.h"
 #include "esp32c3_bt_rom.h"
 
-/*
- * Monitor flags, the SET_TRAFFIC_MONITOR parameter byte. The C3 is BLE-only, so
- * the BR/EDR LMP bits (0x01/0x02) never apply; the bit values match the classic
- * ESP32 so one host tool drives every target.
- */
-#define TRAFFIC_MONITOR_LL_TX 0x04 /* outgoing BLE LL PDUs (data + control) */
-#define TRAFFIC_MONITOR_LL_RX 0x08 /* incoming BLE LL PDUs                   */
-
-/* Everything a hook exists for; a request outside this is UNSUPPORTED_FEATURE. */
+/* Capture sources this target can report (the SET_TRAFFIC_MONITOR mask the handler
+ * accepts). The C3 is BLE-only, so only the LL bits apply. */
 #define TRAFFIC_MONITOR_SUPPORTED (TRAFFIC_MONITOR_LL_TX | TRAFFIC_MONITOR_LL_RX)
-
-/*
- * Capture event layout, carried in the 0xFF vendor event after code and length
- * (identical to the classic ESP32 LMP/LL monitor):
- *
- *   [0] subcode = TRAFFIC_MONITOR_EVT_SUBCODE
- *   [1] direction: 0 = TX, 1 = RX
- *   [2] link id
- *   [3..6] controller clock at capture (little-endian uint32)
- *   [7] PDU length
- *   [8..] the raw LL PDU: a reconstructed 2-byte header (LLID, length) then payload
- */
-#define TRAFFIC_MONITOR_EVT_SUBCODE 0x01
-#define TRAFFIC_MONITOR_DIR_TX 0x00
-#define TRAFFIC_MONITOR_DIR_RX 0x01
 
 /** Enable the capture sources named by flags (TRAFFIC_MONITOR_*); 0 disables all. */
 void traffic_monitor_set(uint8_t flags);

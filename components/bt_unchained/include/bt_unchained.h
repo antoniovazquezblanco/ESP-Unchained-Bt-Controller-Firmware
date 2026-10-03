@@ -11,8 +11,8 @@
 
 /*
  * Unlock whatever this target's controller has to offer: our own vendor command
- * set (Company 0xF00D -- see vsc.h), which on every target includes SET_BDADDR,
- * the link traffic monitor and the scan-channel pin. Call once, after
+ * set (Company 0xF00D -- see unchained_vsc.h), which on every target includes
+ * SET_BDADDR, the link traffic monitor and the scan-channel pin. Call once, after
  * esp_bt_controller_enable().
  */
 void bt_unchained_init(void);

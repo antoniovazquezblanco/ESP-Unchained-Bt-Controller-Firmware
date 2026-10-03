@@ -180,7 +180,7 @@ static void vs_set_traffic_monitor(uint16_t opcode, uint8_t length, const uint8_
         vs_cmd_complete_status(opcode, HCI_ERR_INVALID_PARAMS);
         return;
     }
-    if ((payload[0] & ~LMP_MONITOR_SUPPORTED) != 0) {
+    if ((payload[0] & ~TRAFFIC_MONITOR_SUPPORTED) != 0) {
         /* A flag bit we have no hook for yet -- refuse rather than silently drop it. */
         vs_cmd_complete_status(opcode, HCI_ERR_UNSUPPORTED_FEATURE);
         return;
