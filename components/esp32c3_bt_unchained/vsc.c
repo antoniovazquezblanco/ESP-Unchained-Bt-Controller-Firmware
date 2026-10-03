@@ -19,6 +19,7 @@
 
 #include "esp32c3_bt_rom.h"
 #include "hci.h"
+#include "traffic_monitor.h"
 
 #ifndef ESP32C3_BT_UNCHAINED_BOARD
 #define ESP32C3_BT_UNCHAINED_BOARD "unknown"
@@ -47,12 +48,14 @@ typedef struct
 static void vs_info(uint16_t opcode, uint16_t length, const uint8_t *payload);
 static void vs_supported_cmds(uint16_t opcode, uint16_t length, const uint8_t *payload);
 static void vs_set_bdaddr(uint16_t opcode, uint16_t length, const uint8_t *payload);
+static void vs_set_traffic_monitor(uint16_t opcode, uint16_t length, const uint8_t *payload);
 
 /* The table of vendor-specific commands, mapping opcodes to their handlers. */
 static const vs_cmd_t s_vs_cmds[] = {
     {HCI_OPCODE(HCI_OGF_VENDOR, UNCHAINED_VS_INFO_OCF), vs_info},
     {HCI_OPCODE(HCI_OGF_VENDOR, UNCHAINED_VS_SUPPORTED_CMDS_OCF), vs_supported_cmds},
     {HCI_OPCODE(HCI_OGF_VENDOR, UNCHAINED_VS_SET_BDADDR_OCF), vs_set_bdaddr},
+    {HCI_OPCODE(HCI_OGF_VENDOR, UNCHAINED_VS_SET_TRAFFIC_MONITOR_OCF), vs_set_traffic_monitor},
 };
 
 /*
@@ -149,6 +152,22 @@ static void vs_set_bdaddr(uint16_t opcode, uint16_t length, const uint8_t *paylo
         return;
     }
     memcpy(p_llm_env->bd_addr, payload, BD_ADDR_LEN);
+    vs_cmd_complete_status(opcode, HCI_SUCCESS);
+}
+
+/* 0xFC03 SET_TRAFFIC_MONITOR: enable/disable low-level LL PDU reporting. */
+static void vs_set_traffic_monitor(uint16_t opcode, uint16_t length, const uint8_t *payload)
+{
+    if (length < 1) {
+        vs_cmd_complete_status(opcode, HCI_ERR_INVALID_PARAMS);
+        return;
+    }
+    if ((payload[0] & ~TRAFFIC_MONITOR_SUPPORTED) != 0) {
+        /* A flag bit we have no hook for yet -- refuse rather than silently drop it. */
+        vs_cmd_complete_status(opcode, HCI_ERR_UNSUPPORTED_FEATURE);
+        return;
+    }
+    traffic_monitor_set(payload[0]);
     vs_cmd_complete_status(opcode, HCI_SUCCESS);
 }
 

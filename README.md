@@ -26,10 +26,8 @@ ESP-IDF firmware that turns an Espressif chip into a Bluetooth HCI controller re
 |  Target   |    Radio    | Core ver. |        VSC         |  CompId  | BDADDR | RX ADV CH | LMP Mon | LL Mon |
 | :-------: | :---------: | :-------: | :----------------: | :------: | :----: | :-------: | :-----: | :----: |
 |  `esp32`  | BR/EDR + LE |    4.2    |     **Custom**     | `0xF00D` |   ✓    |     ✓     |    ✓    |   ✓    |
-| `esp32c3` |     LE      |    5.0    | **Custom + Stock** | `0xF00D` |   ✓    |           |    ✗    |        |
+| `esp32c3` |     LE      |    5.0    | **Custom + Stock** | `0xF00D` |   ✓    |           |    ✗    |   ✓    |
 | `esp32c5` |     LE      |    6.0    | **Custom + Stock** | `0xF00D` |   ✓    |           |    ✗    |        |
-
-VSC "Custom + Stock" means the unchained custom vendor group (INFO / SUPPORTED_CMDS / SET_BDADDR, see below) is served alongside the controller's own stock Espressif vendor commands. "LMP Mon" is a BR/EDR feature, so it does not apply (—) to the LE-only C3/C5; "RX ADV CH" (single-channel advertising reception) and "LL Mon" are not yet ported to them.
 
 
 ## Documentation
