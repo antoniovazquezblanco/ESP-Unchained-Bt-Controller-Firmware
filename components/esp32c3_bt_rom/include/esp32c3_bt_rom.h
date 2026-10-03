@@ -2,69 +2,30 @@
  * SPDX-FileCopyrightText: 2026 Antonio Vázquez Blanco <antoniovazquezblanco@gmail.com>
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
- * ESP32-C3 BLE controller ROM glue.
+ * ESP32-C3 BLE controller model: the aggregate header.
  *
- * The C3 ships a large slice of the RivieraWaves BLE stack in mask ROM. Those
- * functions are exported as absolute symbols by ESP-IDF's
- * components/esp_rom/esp32c3/ld/esp32c3.rom.bt_funcs.ld (linked whenever the BT
- * controller runs from IRAM, i.e. not CONFIG_BT_CTRL_RUN_IN_FLASH_ONLY), so this
- * header just declares typed prototypes for the unchained-relevant subset.
+ * The C3 ships a large slice of the RivieraWaves BLE stack in mask ROM, reached
+ * through writable function-pointer tables and RAM env structs (exported as
+ * absolute symbols by esp32c3.rom.ld), and it works through exchange memory. This
+ * component models the slices the unchained layer builds on, split like the
+ * classic esp32_bt_rom:
+ *
+ *   hal/  the memory-mapped hardware -- exchange memory (em.h), gathered by
+ *         hal/hal.h; no core radio registers modelled yet.
+ *   rom/  the ROM software -- the dispatch tables (ip_funcs.h), the HCI surface
+ *         (hci.h), the link-layer environments (lld.h), and the sdk-config
+ *         (sdk_config.h), gathered by rom/rom.h.
+ *
+ * Nothing here changes controller behaviour, it only describes.
  */
 
 #ifndef ESP32C3_BT_ROM_H
 #define ESP32C3_BT_ROM_H
 
 #include <stdbool.h>
-#include <stdint.h>
 
-#include "ip_funcs.h"
-#include "sdk_config.h"
-
-/*
- * HCI command descriptor entry (12 bytes). r_hci_look_for_cmd_desc() returns one
- * of these; the lookup matches on the OCF (opcode & 0x3ff).
- */
-typedef struct
-{
-    uint16_t opcode;      /* +0 OGF<<10 | OCF */
-    uint8_t flags;        /* +2 low nibble CC/CS dest; 0x40 handler self-unpacks; 0x80 ret_fmt is a pack fn */
-    uint8_t par_size_max; /* +3 max accepted parameter length (r_hci_cmd_get_max_param_size) */
-    void *fn;             /* +4 param-unpack format (std cmds) or inline handler (vendor cmds) */
-    void *ret_fmt;        /* +8 return-parameter pack format (0x80) or format table */
-} esp32c3_hci_cmd_desc_t;
-
-/*
- * ESP vendor sub-dispatch entry (8 bytes), walked by
- * r_esp_vendor_hci_command_handler(). Matched on the full opcode; the handler
- * receives the opcode in a3.
- */
-typedef struct
-{
-    uint16_t opcode;
-    uint16_t _reserved;
-    void *handler; /* void handler(uint16_t opcode) */
-} esp32c3_esp_vendor_cmd_t;
-
-/* ---- ROM functions (absolute symbols from esp32c3.rom.bt_funcs.ld) ---- */
-
-/* HCI command entry: resolves the descriptor, unpacks params, routes the cmd. */
-void r_hci_cmd_received(uint16_t opcode, uint16_t param_len, const void *params);
-
-/*
- * Descriptor lookup: OGF -> per-group table, match on OCF. Returns an
- * esp32c3_hci_cmd_desc_t* or NULL. For opcodes > 0xFC80 it also scans the
- * RAM-registered vendor table (the custom-VSC hook, see the reversing doc).
- */
-void *r_hci_look_for_cmd_desc(uint16_t opcode);
-
-/* Install the ROM-default vendor command tables. */
-void r_hci_register_vendor_desc_tab(void);
-void r_register_esp_vendor_cmd_handler(void);
-
-/* Message/command handler-table getters (return the dispatch table base). */
-void *r_llc_hci_cmd_handler_tab_p_get(void);
-void *r_llm_msg_handler_tab_p_get(void);
-void *r_misc_msg_handler_tab_p_get(void);
+#include "hal/hal.h"
+#include "rom/rom.h"
 
 /**
  * Self-test: confirm the ROM BT symbols resolved into the C3 ROM address window.
