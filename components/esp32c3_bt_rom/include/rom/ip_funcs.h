@@ -24,8 +24,11 @@ typedef void (*r_hci_cmd_received_fn_t)(uint16_t opcode, uint16_t param_len, uin
 typedef void *(*r_hci_look_for_cmd_desc_fn_t)(uint16_t opcode);
 typedef void *(*r_hci_look_for_evt_desc_fn_t)(uint8_t evt_code);
 typedef void (*r_hci_send_2_host_fn_t)(void *evt_msg);
-typedef uint32_t (*r_ld_read_clock_fn_t)(void);
+typedef uint32_t (*r_lld_read_clock_fn_t)(void);
 typedef uint32_t (*r_lld_con_rx_llcp_check_fn_t)(uint32_t link_id, void *con_env, uint32_t llid, uint16_t length);
+/* Queue an outgoing connection PDU (data via lld_con_data_tx, control via
+ * lld_con_llcp_tx); tx_elem is an lld_tx_elem_t (rom/lld.h). */
+typedef uint8_t (*r_lld_con_tx_fn_t)(uint32_t link_id, void *tx_elem);
 
 /*
  * The r_ip_funcs dispatch table (partial model). The true table is much larger;
@@ -41,8 +44,12 @@ typedef struct r_ip_funcs
     uint8_t _reserved_94[0x04];                         /* 0x94..0x97 */
     r_hci_look_for_evt_desc_fn_t hci_look_for_evt_desc; /* +0x98 event-descriptor lookup */
     uint8_t _reserved_9c[0x264 - 0x9c];
-    r_ld_read_clock_fn_t ld_read_clock; /* +0x264 current BT clock (312.5us ticks) */
-    uint8_t _reserved_268[0x394 - 0x268];
+    r_lld_read_clock_fn_t lld_read_clock; /* +0x264 current BT clock (312.5us ticks) */
+    uint8_t _reserved_268[0x330 - 0x268];
+    r_lld_con_tx_fn_t lld_con_data_tx; /* +0x330 queue an outgoing data PDU */
+    uint8_t _reserved_334[0x368 - 0x334];
+    r_lld_con_tx_fn_t lld_con_llcp_tx; /* +0x368 queue an outgoing control (LLCP) PDU */
+    uint8_t _reserved_36c[0x394 - 0x36c];
     r_lld_con_rx_llcp_check_fn_t lld_con_rx_llcp_check; /* +0x394 handle one received connection PDU */
 } r_ip_funcs_t;
 
@@ -50,7 +57,9 @@ _Static_assert(offsetof(r_ip_funcs_t, hci_cmd_received) == 0x2c, "hci_cmd_receiv
 _Static_assert(offsetof(r_ip_funcs_t, hci_send_2_host) == 0x8c, "hci_send_2_host @ +0x8c");
 _Static_assert(offsetof(r_ip_funcs_t, hci_look_for_cmd_desc) == 0x90, "hci_look_for_cmd_desc @ +0x90");
 _Static_assert(offsetof(r_ip_funcs_t, hci_look_for_evt_desc) == 0x98, "hci_look_for_evt_desc @ +0x98");
-_Static_assert(offsetof(r_ip_funcs_t, ld_read_clock) == 0x264, "ld_read_clock @ +0x264");
+_Static_assert(offsetof(r_ip_funcs_t, lld_read_clock) == 0x264, "lld_read_clock @ +0x264");
+_Static_assert(offsetof(r_ip_funcs_t, lld_con_data_tx) == 0x330, "lld_con_data_tx @ +0x330");
+_Static_assert(offsetof(r_ip_funcs_t, lld_con_llcp_tx) == 0x368, "lld_con_llcp_tx @ +0x368");
 _Static_assert(offsetof(r_ip_funcs_t, lld_con_rx_llcp_check) == 0x394, "lld_con_rx_llcp_check @ +0x394");
 
 /* The live table (absolute symbol r_ip_funcs_p @ 0x3fcdff8c). */

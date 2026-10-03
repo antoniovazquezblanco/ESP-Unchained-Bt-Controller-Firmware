@@ -19,7 +19,7 @@
 /* Exchange-memory region ids passed to em_buf_get. */
 #define EM_REGION_CS 0x400      /* control structures, element stride 0x5a */
 #define EM_REGION_RXDESC 0x1000 /* RX descriptors, element stride 0x14 */
-#define EM_REGION_ET 0x1400     /* event table */
+#define EM_REGION_TXDESC 0x1400 /* TX descriptors, element stride 0x0e */
 
 /* Control-structure element stride (one per link/activity); the full CS field
  * layout is not modelled yet (needed for the scan-channel pin, see the doc). */
@@ -39,5 +39,23 @@ typedef struct em_rxdesc
 _Static_assert(offsetof(em_rxdesc_t, buf_handle) == 0x12, "rxdesc buf_handle @ +0x12");
 
 #define EM_RXDESC_STRIDE 0x14
+
+/*
+ * A BLE TX descriptor (EM_REGION_TXDESC, stride EM_TXDESC_STRIDE). lld_con_tx_prog
+ * programs these from the queued lld_tx_elem_t; lld_con_tx reads them back on TX
+ * completion. The unchained monitor taps the queue instead (lld_con_data_tx /
+ * lld_con_llcp_tx), so this is modelled for reference only.
+ */
+typedef struct em_txdesc
+{
+    uint8_t _reserved_00[0x02];
+    uint16_t hdr;        /* +0x02 on-air header: LLID (bits 0-1), length (bits 8-15) */
+    uint16_t buf_handle; /* +0x04 handle of the transmitted PDU payload buffer */
+} em_txdesc_t;
+
+_Static_assert(offsetof(em_txdesc_t, hdr) == 0x02, "txdesc hdr @ +0x02");
+_Static_assert(offsetof(em_txdesc_t, buf_handle) == 0x04, "txdesc buf_handle @ +0x04");
+
+#define EM_TXDESC_STRIDE 0x0e
 
 #endif /* ESP32C3_HAL_EM_H */

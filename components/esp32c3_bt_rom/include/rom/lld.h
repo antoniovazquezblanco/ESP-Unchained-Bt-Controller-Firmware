@@ -13,6 +13,26 @@
 #include <stdint.h>
 
 /*
+ * An outgoing link-layer TX buffer element: the node lld_con_data_tx /
+ * lld_con_llcp_tx queue onto the connection. The PDU payload lives in exchange
+ * memory at buf_handle (em_buf_get, hal/em.h). The length field carries the PDU
+ * length in its low 10 bits; for data PDUs lld_con_tx_prog stores the LLID flag
+ * in bits 12-13 (1 = continuation, else data start), set at program time.
+ */
+typedef struct lld_tx_elem
+{
+    uint8_t _hdr[4];       /* +0 co_list node header (next pointer) */
+    uint16_t buf_handle;   /* +4 exchange-memory handle of the PDU payload */
+    uint16_t length_flags; /* +6 length (bits 0-9); data LLID flag (bits 12-13) */
+} lld_tx_elem_t;
+
+_Static_assert(offsetof(lld_tx_elem_t, buf_handle) == 0x04, "tx elem buf_handle @ +4");
+_Static_assert(offsetof(lld_tx_elem_t, length_flags) == 0x06, "tx elem length @ +6");
+
+/* The PDU length carried in lld_tx_elem_t.length_flags (low 10 bits). */
+#define LLD_TX_ELEM_LEN(elem) ((elem)->length_flags & 0x3ff)
+
+/*
  * The link-manager environment. Only the public identity address is modelled:
  * Read_BD_ADDR copies p_llm_env->bd_addr, and the advertising/scan paths read it
  * when they build PDUs, so writing it re-brands the controller's public address.
