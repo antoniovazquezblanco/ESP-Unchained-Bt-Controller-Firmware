@@ -1,0 +1,50 @@
+/*
+ * SPDX-FileCopyrightText: 2026 Antonio Vázquez Blanco <antoniovazquezblanco@gmail.com>
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ *
+ * ESP32 Bluetooth controller (BR/EDR + BLE) ROM glue: the aggregate header.
+ */
+
+#ifndef BT_ROM_ESP32_H
+#define BT_ROM_ESP32_H
+
+#include <stdbool.h>
+#include <stdint.h>
+
+#include "hal/hal.h"
+#include "rom/rom.h"
+
+/*
+ * ke_msg id the ROM uses to allocate an HCI Command Complete event. Pass it to
+ * ke_msg_alloc() with src_id = the command opcode, fill byte [0] = status followed
+ * by the return parameters, then hand the buffer to hci_send_2_host(). Seen in
+ * hci_rd_local_ver_info_cmd_handler and hci_dbg_set_bd_addr_cmd_handler.
+ */
+#define HCI_CC_EVT_KE_ID 0x801
+
+/*
+ * ke_msg id for an unsolicited HCI event (as opposed to a Command Complete).
+ * Allocate with ke_msg_alloc(HCI_EVT_KE_ID, 0, event_code, param_len), fill the
+ * event parameters, then hand the buffer to hci_send_2_host_hack(). hci_tx_start
+ * packs it into an H4 event frame [code][len][params]. Seen throughout the ROM's
+ * event emitters (e.g. r_llm_end_evt_defer).
+ */
+#define HCI_EVT_KE_ID 0x803
+
+/**
+ * Local controller Bluetooth SIG Company Identifier (CompId), default 0x0060.
+ *
+ * A ROM-data constant (never written by the controller) reported in the HCI
+ * Read_Local_Version_Information event and in the LMP/LL version exchange, so
+ * writing it re-brands the controller both to the host and over the air. Provided
+ * as an absolute symbol by bt_rom_esp32.ld; assign a new value once after
+ * esp_bt_controller_enable() to fingerprint a ROM-modified controller.
+ */
+extern volatile uint16_t co_default_compid;
+
+/**
+ * A self-test function for the ESP32 Bluetooth ROM functions.
+ */
+bool bt_rom_esp32_selftest(void);
+
+#endif /* BT_ROM_ESP32_H */

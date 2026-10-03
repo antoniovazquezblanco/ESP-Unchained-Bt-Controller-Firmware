@@ -21,17 +21,17 @@ endif()
 # Requires
 # Cannot be gated on CONFIG_*
 set(requires
-    bt_protocols bt nvs_flash esp_app_format        # Core
-    esp_driver_uart esp_driver_usb_serial_jtag      # HCI transport
-    esp_lcd esp_driver_spi esp_driver_gpio)         # UI / Display
+    bt_unchained bt_protocols bt nvs_flash esp_app_format  # Core
+    esp_driver_uart esp_driver_usb_serial_jtag             # HCI transport
+    esp_lcd esp_driver_spi esp_driver_gpio)                # UI / Display
 
 # Unchained layer: one component per target
 if(IDF_TARGET STREQUAL "esp32")
-    list(APPEND requires esp32_bt_unchained)
+    list(APPEND requires bt_unchained_esp32)
 elseif(IDF_TARGET STREQUAL "esp32c3")
-    list(APPEND requires esp32c3_bt_unchained)
+    list(APPEND requires bt_unchained_esp32c3)
 elseif(IDF_TARGET STREQUAL "esp32c5")
-    list(APPEND requires esp32c5_bt_unchained)
+    list(APPEND requires bt_unchained_esp32c5)
 endif()
 
 idf_component_register(SRCS "main.c"
