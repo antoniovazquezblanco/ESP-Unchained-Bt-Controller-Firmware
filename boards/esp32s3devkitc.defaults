@@ -1,0 +1,18 @@
+# SPDX-FileCopyrightText: 2026 Antonio Vázquez Blanco <antoniovazquezblanco@gmail.com>
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Board: ESP32-S3-DevKitC-1
+#
+# ESP32-S3 (dual-core Xtensa), WROOM-1-N8 module (8 MB flash), two USB-C sockets:
+# "UART" (CP2102 bridge to UART0) and "USB" (native USB-Serial/JTAG on
+# GPIO19/GPIO20). This board talks HCI over the native "USB" socket. The BLE
+# controller is the same RivieraWaves build as the ESP32-C3.
+# Layered on top of the common sdkconfig.defaults by:
+#   idf.py -DBOARD=esp32s3devkitc set-target esp32s3 build
+CONFIG_ESPTOOLPY_FLASHSIZE_8MB=y
+
+# HCI transport
+# Bridge VHCI to the chip's native USB-Serial/JTAG, reached on the "USB" socket.
+CONFIG_BT_CTRL_HCI_MODE_VHCI=y
+CONFIG_UNCHAINED_HCI_OVER_USB_SERIAL_JTAG=y
+CONFIG_ESP_CONSOLE_SECONDARY_NONE=y

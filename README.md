@@ -17,17 +17,19 @@ ESP-IDF firmware that turns an Espressif chip into a Bluetooth HCI controller re
 
 | Board                                          |                                        Image                                         |  Target   | Transport                        |    Display     |
 | :--------------------------------------------- | :----------------------------------------------------------------------------------: | :-------: | :------------------------------- | :------------: |
-| **ScapyCon 2026 badge**                        |  <img src="doc/img/board_scapycon2026.png" alt="SCAPYCON 2026 badge" height="120">   | `esp32c5` | Native USB-Serial/JTAG           | ST7789 320×240 |
-| **ESP32-C3 SuperMini**                         | <img src="doc/img/board_esp32c3supermini.png" alt="ESP32-C3 SuperMini" height="120"> | `esp32c3` | Native USB-Serial/JTAG           |       -        |
 | **ESP32-DevKitC-32E** / **ESP32-DevKitC-32UE** |  <img src="doc/img/board_esp32devkitc32.png" alt="ESP32-DevKitC-32E" height="120">   |  `esp32`  | UART0 @ 921600 (USB-UART bridge) |       -        |
+| **ESP32-C3 SuperMini**                         | <img src="doc/img/board_esp32c3supermini.png" alt="ESP32-C3 SuperMini" height="120"> | `esp32c3` | Native USB-Serial/JTAG           |       -        |
+| **ScapyCon 2026 badge**                        |  <img src="doc/img/board_scapycon2026.png" alt="SCAPYCON 2026 badge" height="120">   | `esp32c5` | Native USB-Serial/JTAG           | ST7789 320×240 |
+| **ESP32-S3-DevKitC-1**                         |  <img src="doc/img/board_esp32s3devkitc.png" alt="ESP32-S3-DevKitC-1" height="120">  | `esp32s3` | Native USB-Serial/JTAG           |       -        |
 
 ## Features
 
-|  Target   |    Radio    | Core ver. |        VSC         |  CompId  | BDADDR | RX ADV CH | LMP Mon | LL Mon |
-| :-------: | :---------: | :-------: | :----------------: | :------: | :----: | :-------: | :-----: | :----: |
-|  `esp32`  | BR/EDR + LE |    4.2    |     **Custom**     | `0xF00D` |   ✓    |     ✓     |    ✓    |   ✓    |
-| `esp32c3` |     LE      |    5.0    |     **Custom**     | `0xF00D` |   ✓    |     ✓     |    ✗    |   ✓    |
-| `esp32c5` |     LE      |    6.0    |     **Custom**     | `0xF00D` |   ✓    |     ✓     |    ✗    |   ✓    |
+|  Target   |    Radio    | Core ver. |    VSC     |  CompId  | BDADDR | RX ADV CH | LMP Mon | LL Mon |
+| :-------: | :---------: | :-------: | :--------: | :------: | :----: | :-------: | :-----: | :----: |
+|  `esp32`  | BR/EDR + LE |    4.2    | **Custom** | `0xF00D` |   ✓    |     ✓     |    ✓    |   ✓    |
+| `esp32c3` |     LE      |    5.0    | **Custom** | `0xF00D` |   ✓    |     ✓     |    ✗    |   ✓    |
+| `esp32c5` |     LE      |    6.0    | **Custom** | `0xF00D` |   ✓    |     ✓     |    ✗    |   ✓    |
+| `esp32s3` |     LE      |    5.0    | **Custom** | `0xF00D` |   ✓    |     ✓     |    ✗    |   ✓    |
 
 ## Documentation
 

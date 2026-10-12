@@ -32,6 +32,8 @@ elseif(IDF_TARGET STREQUAL "esp32c3")
     list(APPEND requires bt_unchained_esp32c3)
 elseif(IDF_TARGET STREQUAL "esp32c5")
     list(APPEND requires bt_unchained_esp32c5)
+elseif(IDF_TARGET STREQUAL "esp32s3")
+    list(APPEND requires bt_unchained_esp32s3)
 endif()
 
 idf_component_register(SRCS "main.c"
@@ -39,4 +41,4 @@ idf_component_register(SRCS "main.c"
                             "bluetooth/transport/transport.c" ${srcs_hci_transport} ${srcs_ui}
                        PRIV_REQUIRES ${requires}
                        INCLUDE_DIRS "." "ui" "bluetooth"
-                       REQUIRED_IDF_TARGETS esp32c5 esp32c3 esp32)
+                       REQUIRED_IDF_TARGETS esp32c5 esp32c3 esp32 esp32s3)
