@@ -7,6 +7,8 @@ if(CONFIG_UNCHAINED_HCI_OVER_USB_SERIAL_JTAG)
     list(APPEND srcs_hci_transport "bluetooth/transport/hci_usb_serial_jtag.c")
 elseif(CONFIG_UNCHAINED_HCI_OVER_UART)
     list(APPEND srcs_hci_transport "bluetooth/transport/hci_uart.c")
+elseif(CONFIG_UNCHAINED_HCI_OVER_USB_BTH)
+    list(APPEND srcs_hci_transport "bluetooth/transport/hci_usb_bth.c")
 endif()
 if(srcs_hci_transport)
     list(APPEND srcs_hci_transport "bluetooth/transport/vhci_bridge.c")
@@ -24,6 +26,11 @@ set(requires
     bt_unchained bt_protocols bt nvs_flash esp_app_format  # Core
     esp_driver_uart esp_driver_usb_serial_jtag             # HCI transport
     esp_lcd esp_driver_spi esp_driver_gpio)                # UI / Display
+
+# Native USB Bluetooth (BTH) transport pulls in TinyUSB (esp32s3 only).
+if(CONFIG_UNCHAINED_HCI_OVER_USB_BTH)
+    list(APPEND requires esp_tinyusb)
+endif()
 
 # Unchained layer: one component per target
 if(IDF_TARGET STREQUAL "esp32")

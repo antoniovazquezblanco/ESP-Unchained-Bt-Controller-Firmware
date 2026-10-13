@@ -1,0 +1,13 @@
+# SPDX-FileCopyrightText: 2026 Antonio Vázquez Blanco <antoniovazquezblanco@gmail.com>
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Managed component dependencies for the firmware application.
+
+dependencies:
+  # TinyUSB, used only by the native USB Bluetooth (BTH class) HCI transport on
+  # the ESP32-S3 (the one target with a USB-OTG controller). Pulled only for that
+  # target; it is linked only when CONFIG_UNCHAINED_HCI_OVER_USB_BTH selects it.
+  espressif/esp_tinyusb:
+    version: ">=1.7.0"
+    rules:
+      - if: "target == esp32s3"

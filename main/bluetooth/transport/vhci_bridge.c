@@ -8,10 +8,13 @@
 
 #include "vhci_bridge.h"
 
+#include <string.h>
+
 #include "esp_bt.h"
 #include "esp_check.h"
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
+#include "freertos/message_buffer.h"
 #include "freertos/semphr.h"
 #include "freertos/stream_buffer.h"
 #include "freertos/task.h"
@@ -29,9 +32,11 @@ static const char *TAG = "VHCI";
 
 #define TX_STREAM_BYTES 4096
 
-static const vhci_bridge_io_t *s_io; /* the transport we were handed */
-static StreamBufferHandle_t s_tx;    /* controller -> transport */
-static SemaphoreHandle_t s_can_send; /* controller is ready for a packet */
+static const vhci_bridge_io_t *s_io;         /* byte-stream transport, or NULL */
+static const vhci_bridge_pkt_io_t *s_pkt_io; /* packet transport, or NULL */
+static StreamBufferHandle_t s_tx;            /* controller -> byte transport */
+static MessageBufferHandle_t s_tx_msg;       /* controller -> packet transport, framed */
+static SemaphoreHandle_t s_can_send;         /* controller is ready for a packet */
 
 /* ---- controller -> host ------------------------------------------------- */
 
@@ -42,9 +47,17 @@ static void notify_host_send_available(void)
 
 static int notify_host_recv(uint8_t *data, uint16_t len)
 {
-    /* Called in controller context, so it must not block. A partial write would
-     * desynchronise the H4 stream for good, so a packet that does not fit whole
-     * is dropped whole and the stream stays well-formed. */
+    /* Called in controller context, so it must not block. A packet that does not
+     * fit whole is dropped whole: in byte mode a partial write would desynchronise
+     * the H4 stream, and in packet mode a message buffer keeps frame boundaries. */
+    if (s_pkt_io) {
+        if (xMessageBufferSpacesAvailable(s_tx_msg) < (size_t)len + sizeof(size_t)) {
+            ESP_LOGW(TAG, "host not draining, dropped a %u byte packet", (unsigned)len);
+            return 0;
+        }
+        xMessageBufferSend(s_tx_msg, data, len, 0);
+        return 0;
+    }
     if (xStreamBufferSpacesAvailable(s_tx) < len) {
         ESP_LOGW(TAG, "host not draining, dropped a %u byte packet", (unsigned)len);
         return 0;
@@ -72,6 +85,19 @@ static void vhci_bridge_tx_task(void *arg)
             }
             off += (size_t)w;
         }
+    }
+}
+
+static void vhci_bridge_pkt_tx_task(void *arg)
+{
+    static uint8_t frame[HCI_MAX_FRAME];
+    for (;;) {
+        size_t n = xMessageBufferReceive(s_tx_msg, frame, sizeof(frame), portMAX_DELAY);
+        if (n < 1) {
+            continue;
+        }
+        /* frame[0] is the H4 type byte; the packet transport takes type + payload. */
+        s_pkt_io->send(frame[0], frame + 1, n - 1);
     }
 }
 
@@ -210,5 +236,42 @@ esp_err_t vhci_bridge_start(const vhci_bridge_io_t *io)
                         ESP_ERR_NO_MEM, TAG, "rx task");
 
     ESP_LOGI(TAG, "HCI H4 bridged to %s", io->name);
+    return ESP_OK;
+}
+
+void vhci_bridge_pkt_input(uint8_t type, const uint8_t *data, size_t len)
+{
+    /* Rebuild the H4 frame the controller expects (type byte + payload). Called
+     * only from the transport's single receive context, so one static buffer is
+     * safe and keeps the frame off the caller's stack. */
+    static uint8_t frame[HCI_MAX_FRAME];
+    if (1 + len > sizeof(frame)) {
+        ESP_LOGW(TAG, "host packet too large (%u bytes), dropped", (unsigned)len);
+        return;
+    }
+    frame[0] = type;
+    memcpy(frame + 1, data, len);
+    send_to_controller(frame, 1 + len);
+}
+
+esp_err_t vhci_bridge_start_pkt(const vhci_bridge_pkt_io_t *io)
+{
+    ESP_RETURN_ON_FALSE(io && io->send, ESP_ERR_INVALID_ARG, TAG, "io");
+    s_pkt_io = io;
+
+    s_tx_msg = xMessageBufferCreate(TX_STREAM_BYTES);
+    ESP_RETURN_ON_FALSE(s_tx_msg, ESP_ERR_NO_MEM, TAG, "tx msg buffer");
+
+    s_can_send = xSemaphoreCreateBinary();
+    ESP_RETURN_ON_FALSE(s_can_send, ESP_ERR_NO_MEM, TAG, "send semaphore");
+
+    ESP_RETURN_ON_ERROR(esp_vhci_host_register_callback(&s_vhci_cb), TAG, "vhci callback");
+
+    /* No rx task: the transport feeds host->controller packets with
+     * vhci_bridge_pkt_input from its own receive context. */
+    ESP_RETURN_ON_FALSE(xTaskCreate(vhci_bridge_pkt_tx_task, "hci_tx", 3072, NULL, 12, NULL) == pdPASS,
+                        ESP_ERR_NO_MEM, TAG, "tx task");
+
+    ESP_LOGI(TAG, "HCI packets bridged to %s", io->name);
     return ESP_OK;
 }

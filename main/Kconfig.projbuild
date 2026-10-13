@@ -110,6 +110,12 @@ config UNCHAINED_HCI_OVER_UART
     help
         Bridge the controller's VHCI to a hardware UART, so the board is a plain H4 HCI controller over that UART. Use this on chips without a native USB-Serial/JTAG (e.g. the classic ESP32, reached through its onboard USB-UART bridge on UART0). The chosen UART must not also carry the console -- set CONFIG_ESP_CONSOLE_NONE, or move the console to another UART.
 
+config UNCHAINED_HCI_OVER_USB_BTH
+    bool "Native USB Bluetooth (USB-OTG, BTH class)"
+    depends on SOC_USB_OTG_SUPPORTED
+    help
+        Expose the controller through the chip's USB-OTG port as a standard USB Bluetooth HCI device (Wireless Controller class, 0xE0/01/01) over TinyUSB, so the board enumerates as a native Bluetooth dongle -- Linux btusb binds it as an hciX adapter with no H4 attach. Unlike the H4 transports there is no framing on the wire: HCI commands arrive on the control endpoint, events go back on an interrupt endpoint and ACL data on bulk endpoints. S3-only (needs USB-OTG); it shares the native USB pins with USB-Serial/JTAG, so only one of the two can own that port.
+
 endchoice
 
 if UNCHAINED_HCI_OVER_UART

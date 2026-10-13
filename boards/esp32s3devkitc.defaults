@@ -3,16 +3,27 @@
 #
 # Board: ESP32-S3-DevKitC-1
 #
-# ESP32-S3 (dual-core Xtensa), WROOM-1-N8 module (8 MB flash), two USB-C sockets:
-# "UART" (CP2102 bridge to UART0) and "USB" (native USB-Serial/JTAG on
-# GPIO19/GPIO20). This board talks HCI over the native "USB" socket. The BLE
-# controller is the same RivieraWaves build as the ESP32-C3.
+# ESP32-S3 (dual-core Xtensa), WROOM-1-N8 module (8 MB flash). The native "USB"
+# socket runs the USB-OTG controller as a standard USB Bluetooth HCI dongle (BTH
+# class) via TinyUSB, so the board enumerates as a Bluetooth adapter (Linux
+# btusb -> hciX). Console/logs stay on UART0 (the "UART" / CP2102 socket).
 # Layered on top of the common sdkconfig.defaults by:
 #   idf.py -DBOARD=esp32s3devkitc set-target esp32s3 build
 CONFIG_ESPTOOLPY_FLASHSIZE_8MB=y
 
-# HCI transport
-# Bridge VHCI to the chip's native USB-Serial/JTAG, reached on the "USB" socket.
+# Controller VHCI
 CONFIG_BT_CTRL_HCI_MODE_VHCI=y
-CONFIG_UNCHAINED_HCI_OVER_USB_SERIAL_JTAG=y
+
+# HCI transport: native USB-OTG, BTH class (TinyUSB).
+CONFIG_UNCHAINED_HCI_OVER_USB_BTH=y
+
+# The USB-OTG owns the native USB pins, so nothing else may: keep the console on
+# UART0 and disable the USB-Serial/JTAG secondary console.
 CONFIG_ESP_CONSOLE_SECONDARY_NONE=y
+
+# TinyUSB: expose only the Bluetooth (BTH) device class. The 6 ISO alt settings
+# give the voice/SCO interface the USB BT spec mandates; Microsoft's bthusb.sys
+# refuses to start the radio without it (Linux btusb does not need it).
+CONFIG_TINYUSB_BTH_ENABLED=y
+CONFIG_TINYUSB_BTH_ISO_ALT_COUNT=6
+CONFIG_TINYUSB_CDC_ENABLED=n

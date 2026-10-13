@@ -16,6 +16,7 @@
 #define HCI_PKT_CMD 0x01
 #define HCI_PKT_ACL 0x02
 #define HCI_PKT_SCO 0x03
+#define HCI_PKT_EVT 0x04
 #define HCI_PKT_ISO 0x05
 
 /* Header sizes, not counting the packet type indicator. */

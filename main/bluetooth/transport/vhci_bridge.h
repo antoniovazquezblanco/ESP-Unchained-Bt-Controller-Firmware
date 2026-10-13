@@ -32,10 +32,38 @@ typedef struct
 } vhci_bridge_io_t;
 
 /*
+ * Packet representation, for transports that frame HCI themselves instead of
+ * carrying an H4 byte stream (e.g. the USB Bluetooth class, where the packet
+ * type is implicit in the endpoint). send() delivers one controller->host packet
+ * of the given type (HCI_PKT_*, see hci.h) with its payload only -- no H4 type
+ * byte. It is called from the bridge task and may block; it reports how much it
+ * took.
+ */
+typedef struct
+{
+    const char *name;
+    int (*send)(uint8_t type, const uint8_t *data, size_t len);
+} vhci_bridge_pkt_io_t;
+
+/*
  * Attach the bridge to the controller and start pumping data.
  * Call once, after the transport has its driver up.
  * The io structure must outlive the call.
  */
 esp_err_t vhci_bridge_start(const vhci_bridge_io_t *io);
+
+/*
+ * Packet-mode variant of vhci_bridge_start, for a vhci_bridge_pkt_io_t transport.
+ * The bridge calls io->send for each controller->host packet; the transport feeds
+ * host->controller packets back with vhci_bridge_pkt_input. Call once.
+ */
+esp_err_t vhci_bridge_start_pkt(const vhci_bridge_pkt_io_t *io);
+
+/*
+ * Submit one host->controller packet (packet type + payload, no H4 type byte) in
+ * packet mode. Thread-safe against the controller; blocks until the controller
+ * accepts it. Call only after vhci_bridge_start_pkt.
+ */
+void vhci_bridge_pkt_input(uint8_t type, const uint8_t *data, size_t len);
 
 #endif /* VHCI_BRIDGE_H */

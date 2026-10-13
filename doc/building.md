@@ -22,7 +22,7 @@ Available boards:
 | ------------------- | --------- | -------------------------------------------------------------------------------------- |
 | `scapycon2026badge` | `esp32c5` | SCAPYCON 2026 badge; ST7789 display                                                    |
 | `esp32c3supermini`  | `esp32c3` | ESP32-C3 Super Mini; no display                                                        |
-| `esp32s3devkitc`    | `esp32s3` | ESP32-S3-DevKitC-1; HCI over native USB-Serial/JTAG (the "USB" socket)                 |
+| `esp32s3devkitc`    | `esp32s3` | ESP32-S3-DevKitC-1 as a native USB Bluetooth dongle (USB-OTG, BTH class); console on UART0 |
 | `esp32devkitc`      | `esp32`   | ESP32-DevKitC (WROOM-32E / -32UE); dual-mode BR/EDR + BLE; HCI over UART0, console off |
 
 Building with no board selected is a compile check only: it produces a controller with no HCI transport, which runs but cannot be talked to.

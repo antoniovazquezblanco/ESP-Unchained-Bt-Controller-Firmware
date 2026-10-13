@@ -3,6 +3,7 @@ build*/
 sdkconfig
 sdkconfig.old
 *.log
+managed_components/
 
 # Python
 __pycache__/

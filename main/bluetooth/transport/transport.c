@@ -14,6 +14,8 @@
 #include "hci_usb_serial_jtag.h"
 #elif CONFIG_UNCHAINED_HCI_OVER_UART
 #include "hci_uart.h"
+#elif CONFIG_UNCHAINED_HCI_OVER_USB_BTH
+#include "hci_usb_bth.h"
 #endif
 
 static const char *TAG = "TL";
@@ -26,6 +28,8 @@ esp_err_t transport_init(void)
     return hci_usb_serial_jtag_init();
 #elif CONFIG_UNCHAINED_HCI_OVER_UART
     return hci_uart_init();
+#elif CONFIG_UNCHAINED_HCI_OVER_USB_BTH
+    return hci_usb_bth_init();
 #else
 #pragma message("No HCI transport selected!")
     ESP_LOGW(TAG, "No HCI transport selected!");
