@@ -14,6 +14,7 @@
 #include "sdkconfig.h"
 
 #include "bluetooth.h"
+#include "status_led.h"
 #if CONFIG_UNCHAINED_DISPLAY_ENABLED
 #include "ui.h"
 #endif
@@ -24,6 +25,9 @@ void app_main(void)
     /* UI initialization */
     ui_init();
 #endif
+
+    /* Status LED (no-op unless a board enables it) */
+    status_led_init();
 
     /* NVS initialization */
     esp_err_t ret = nvs_flash_init();

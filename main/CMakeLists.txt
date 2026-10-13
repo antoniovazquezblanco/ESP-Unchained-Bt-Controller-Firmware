@@ -20,12 +20,18 @@ if(CONFIG_UNCHAINED_DISPLAY_ENABLED)
     set(srcs_ui "ui/ui.c" "ui/display.c" "ui/console.c" "ui/splash.c" "ui/gfx.c" "ui/font.c")
 endif()
 
+# Status LEDs
+set(srcs_status "")
+if(CONFIG_UNCHAINED_LED_ENABLED)
+    set(srcs_status "status/status_led.c")
+endif()
+
 # Requires
 # Cannot be gated on CONFIG_*
 set(requires
     bt_unchained bt_protocols bt nvs_flash esp_app_format  # Core
     esp_driver_uart esp_driver_usb_serial_jtag             # HCI transport
-    esp_lcd esp_driver_spi esp_driver_gpio)                # UI / Display
+    esp_lcd esp_driver_spi esp_driver_gpio led_strip)      # UI / Display
 
 # Native USB Bluetooth (BTH) transport pulls in TinyUSB (esp32s3 only).
 if(CONFIG_UNCHAINED_HCI_OVER_USB_BTH)
@@ -45,7 +51,7 @@ endif()
 
 idf_component_register(SRCS "main.c"
                             "bluetooth/bluetooth.c"
-                            "bluetooth/transport/transport.c" ${srcs_hci_transport} ${srcs_ui}
+                            "bluetooth/transport/transport.c" ${srcs_hci_transport} ${srcs_ui} ${srcs_status}
                        PRIV_REQUIRES ${requires}
-                       INCLUDE_DIRS "." "ui" "bluetooth"
+                       INCLUDE_DIRS "." "ui" "bluetooth" "status"
                        REQUIRED_IDF_TARGETS esp32c5 esp32c3 esp32 esp32s3)

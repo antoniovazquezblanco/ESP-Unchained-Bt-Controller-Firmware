@@ -77,6 +77,80 @@ endif # UNCHAINED_DISPLAY_ENABLED
 
 endmenu
 
+menu "ESP Unchained status LEDs"
+
+config UNCHAINED_LED_ENABLED
+    bool "Enable addressable status LED(s)"
+    default n
+    help
+        Drive an addressable RGB LED (WS2812 / SK6812 / SK6805) over RMT as a
+        controller status indicator: idle heartbeat, HCI traffic, capture activity
+        and dropped packets. Off by default; boards that wire one enable it in
+        boards/<name>.defaults.
+
+if UNCHAINED_LED_ENABLED
+
+config UNCHAINED_LED_GPIO
+    int "LED data GPIO"
+    default -1
+    help
+        GPIO wired to the LED (strip) data-in. Required; the build errors if unset.
+
+config UNCHAINED_LED_COUNT
+    int "Number of LEDs on the data line"
+    default 1
+    help
+        Total pixels on the strip. One is the usual case (a single onboard RGB).
+        Boards with more drive a few of them as the status indicator and paint the
+        rest a static accent colour (see below).
+
+config UNCHAINED_LED_STATUS_FIRST
+    int "Index of the first status pixel"
+    default 0
+    help
+        Where the status indicator starts on the strip. Pixels outside the status
+        range show UNCHAINED_LED_ACCENT_RGB.
+
+config UNCHAINED_LED_STATUS_COUNT
+    int "How many consecutive pixels show the status"
+    default 1
+    help
+        The status indicator spans this many pixels from UNCHAINED_LED_STATUS_FIRST,
+        all showing the same colour -- e.g. both LEDs of a two-pixel logo.
+
+config UNCHAINED_LED_ACCENT_FIRST
+    int "Index of the first accent pixel"
+    default 0
+    help
+        Where the static accent range starts on the strip.
+
+config UNCHAINED_LED_ACCENT_COUNT
+    int "How many consecutive pixels show the accent colour"
+    default 0
+    help
+        Pixels in this range hold UNCHAINED_LED_ACCENT_RGB. Pixels in neither the
+        status nor the accent range are left off, so a strip can carry a lit brand
+        accent, a status indicator, and dark pixels between them.
+
+config UNCHAINED_LED_ACCENT_RGB
+    hex "Accent colour (0xRRGGBB)"
+    default 0x000000
+    help
+        The colour held by the accent range. Used to keep a brand accent lit while
+        a sub-set of the strip reports controller status.
+
+config UNCHAINED_LED_BRIGHTNESS
+    int "Per-channel brightness ceiling (1-255)"
+    default 48
+    range 1 255
+    help
+        Caps each colour channel, status and accent alike. Keep it low on
+        battery-powered boards -- a strip at full brightness is a real current draw.
+
+endif # UNCHAINED_LED_ENABLED
+
+endmenu
+
 menu "ESP Unchained HCI"
 
 # Variable to note if the controller exposes VHCI.

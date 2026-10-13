@@ -11,3 +11,9 @@ dependencies:
     version: ">=1.7.0"
     rules:
       - if: "target == esp32s3"
+
+  # RMT addressable-LED driver for the status LEDs. Always pulled (main requires
+  # it unconditionally, like esp_lcd); linked only when CONFIG_UNCHAINED_LED_ENABLED
+  # selects status/status_led.c.
+  espressif/led_strip:
+    version: "^3"

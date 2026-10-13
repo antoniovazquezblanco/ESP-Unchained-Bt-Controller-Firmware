@@ -19,7 +19,9 @@
 #include "freertos/stream_buffer.h"
 #include "freertos/task.h"
 
+#include "capture_event.h"
 #include "hci.h"
+#include "status_led.h"
 
 static const char *TAG = "VHCI";
 
@@ -47,22 +49,30 @@ static void notify_host_send_available(void)
 
 static int notify_host_recv(uint8_t *data, uint16_t len)
 {
-    /* Called in controller context, so it must not block. A packet that does not
-     * fit whole is dropped whole: in byte mode a partial write would desynchronise
-     * the H4 stream, and in packet mode a message buffer keeps frame boundaries. */
+    /* Called in controller context, so it must not block (status_led_notify only
+     * sets an atomic). A packet that does not fit whole is dropped whole: in byte
+     * mode a partial write would desynchronise the H4 stream, and in packet mode a
+     * message buffer keeps frame boundaries. */
+    bool capture = len >= 4 && data[0] == HCI_PKT_EVT &&
+                   data[1] == HCI_EVT_VENDOR_SPECIFIC &&
+                   data[3] == TRAFFIC_MONITOR_EVT_SUBCODE;
     if (s_pkt_io) {
         if (xMessageBufferSpacesAvailable(s_tx_msg) < (size_t)len + sizeof(size_t)) {
             ESP_LOGW(TAG, "host not draining, dropped a %u byte packet", (unsigned)len);
+            status_led_notify(STATUS_LED_DROP);
             return 0;
         }
         xMessageBufferSend(s_tx_msg, data, len, 0);
+        status_led_notify(capture ? STATUS_LED_CAPTURE : STATUS_LED_HOST_RX);
         return 0;
     }
     if (xStreamBufferSpacesAvailable(s_tx) < len) {
         ESP_LOGW(TAG, "host not draining, dropped a %u byte packet", (unsigned)len);
+        status_led_notify(STATUS_LED_DROP);
         return 0;
     }
     xStreamBufferSend(s_tx, data, len, 0);
+    status_led_notify(capture ? STATUS_LED_CAPTURE : STATUS_LED_HOST_RX);
     return 0;
 }
 
@@ -147,6 +157,7 @@ static void send_to_controller(uint8_t *frame, size_t len)
         }
     }
     esp_vhci_host_send_packet(frame, (uint16_t)len);
+    status_led_notify(STATUS_LED_HOST_TX); /* covers both H4 and BTH host paths */
 }
 
 static void vhci_bridge_rx_task(void *arg)

@@ -10,6 +10,7 @@
 #include "esp_bt.h"
 
 #include "bt_unchained.h"
+#include "status_led.h"
 #include "transport/transport.h"
 
 static const char *TAG = "BT";
@@ -61,5 +62,6 @@ esp_err_t bluetooth_init(void)
         return ret;
     }
 
+    status_led_notify(STATUS_LED_READY); /* controller up, host reachable */
     return ESP_OK;
 }

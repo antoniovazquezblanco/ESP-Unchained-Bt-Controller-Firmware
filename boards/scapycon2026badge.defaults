@@ -9,6 +9,21 @@
 #   idf.py -DBOARD=scapycon2026badge set-target esp32c5 build
 CONFIG_ESPTOOLPY_FLASHSIZE_4MB=y
 
+# Status LED: the 6-pixel SK6805 strip on GPIO10. PCB chain order is
+# U6,U7 (Scapy logo) -> U9,U10 (V2X logo) -> U11,U12 (Bluetooth logo). Show
+# controller status on the Bluetooth-logo pair (indices 4-5), hold the Scapy logo
+# (0-1) green, and leave the V2X pair (2-3) off. Battery-powered, so keep the
+# ceiling conservative.
+CONFIG_UNCHAINED_LED_ENABLED=y
+CONFIG_UNCHAINED_LED_GPIO=10
+CONFIG_UNCHAINED_LED_COUNT=6
+CONFIG_UNCHAINED_LED_STATUS_FIRST=4
+CONFIG_UNCHAINED_LED_STATUS_COUNT=2
+CONFIG_UNCHAINED_LED_ACCENT_FIRST=0
+CONFIG_UNCHAINED_LED_ACCENT_COUNT=2
+CONFIG_UNCHAINED_LED_ACCENT_RGB=0x00FF00
+CONFIG_UNCHAINED_LED_BRIGHTNESS=64
+
 # HCI transport
 # Use the badge's single USB-C socket, which is wired to the
 # chip's native USB-Serial/JTAG.
