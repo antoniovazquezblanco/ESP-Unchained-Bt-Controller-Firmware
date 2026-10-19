@@ -122,9 +122,10 @@ id `0xFF` and cannot be used to source it.
 | 4      | 1    | Payload length                                        |
 | 5      | *n*  | Payload (for control, the LLCP opcode first)         |
 
-Control (LLCP) payload is capped at 27 bytes; data at 251. On the C3/S3/C5 the
-data LLID start/continuation choice is made by the controller at transmit time,
-so LLID `0x01` and `0x02` currently behave the same.
+Control (LLCP) payload is capped at 27 bytes (26 on the classic ESP32); data at
+251 (27 on the classic -- a single PDU, see below). On every target the data LLID
+start/continuation choice is made by the controller at transmit time, so LLID
+`0x01` and `0x02` behave the same.
 
 On the C3/S3, data longer than the link's current maximum TX octets (27 without
 Data Length Extension) is fragmented by the controller into a start PDU plus
@@ -133,13 +134,19 @@ Number Of Completed Packets like host ACL. Only one control PDU is in flight per
 link: while one (injected or the controller's own) awaits its air ack, a control
 injection returns `0x0C`; retry after a connection event.
 
+The classic ESP32 injects a single LL PDU without fragmenting, so an LL payload is
+capped at 27 octets (data) / 26 (control); a longer one returns `0x12`. Data goes
+through the controller's own send path (reported in Number Of Completed Packets);
+control goes out verbatim through the controller's raw-LLCP test path, so any
+opcode -- known, unknown or malformed -- is transmitted exactly as given.
+
 **BR/EDR LMP** (`kind 0x01`) -- the PDU is the raw LMP bytes, opcode first
 (`byte0 = opcode<<1 | TID`; `0x7F` escapes to a 1-byte extended opcode in
 `byte1`), up to 17 bytes.
 
 Per-target support: the BLE-only targets (ESP32-C3, ESP32-S3, ESP32-C5) implement
-`kind 0x02` BLE LL and reject `kind 0x01` LMP; the classic ESP32 implements
-`kind 0x01` LMP and does not yet implement `kind 0x02` BLE LL.
+`kind 0x02` BLE LL and reject `kind 0x01` LMP; the classic ESP32 implements both
+`kind 0x01` LMP and `kind 0x02` BLE LL.
 
 Returns status:
 

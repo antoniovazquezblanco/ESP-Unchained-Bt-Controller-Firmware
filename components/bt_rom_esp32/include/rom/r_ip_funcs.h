@@ -63,17 +63,20 @@ typedef void (*r_bt_util_buf_acl_rx_free_fn_t)(uint16_t buf);
 
 /**
  * Signature of r_bt_util_buf_acl_tx_alloc, slot 5 of the IP functions table.
- * It allocates an ACL TX buffer from exchange memory, returning its EM offset
- * (0 when the pool is exhausted).
+ * It pops a free ACL TX buffer off the pool and returns its descriptor node (an
+ * em_buf_node, rom/em.h: idx at +4, EM payload offset buf_ptr at +6), or NULL
+ * when the pool is exhausted. Verified on-chip: it is the node the ROM's own LL
+ * data path hands to lld_pdu_data_send as payload_ref.
  */
-typedef uint16_t (*r_bt_util_buf_acl_tx_alloc_fn_t)(void);
+struct em_buf_node;
+typedef struct em_buf_node *(*r_bt_util_buf_acl_tx_alloc_fn_t)(void);
 
 /**
  * Signature of r_bt_util_buf_acl_tx_free, slot 6 of the IP functions table.
- * It releases the ACL TX buffer at the given exchange-memory offset back to its
- * pool.
+ * It releases an ACL TX buffer back to its pool, taken by its buffer index
+ * (em_buf_node.idx), not by pointer.
  */
-typedef void (*r_bt_util_buf_acl_tx_free_fn_t)(uint16_t buf);
+typedef void (*r_bt_util_buf_acl_tx_free_fn_t)(uint16_t idx);
 
 /**
  * Signature of r_bt_util_buf_sync_init, slot 7 of the IP functions table.

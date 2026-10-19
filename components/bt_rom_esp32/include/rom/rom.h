@@ -18,6 +18,7 @@
 #include "rom/bt_em_buf.h"
 #include "rom/hci_desc_tabs.h"
 #include "rom/ld_env.h"
+#include "rom/llc.h"
 #include "rom/lmp_desc_tab.h"
 #include "rom/r_ip_funcs.h"
 #include "rom/r_modules_funcs.h"
