@@ -72,23 +72,45 @@ _Static_assert(offsetof(r_ip_funcs_t, lld_scan_sched) == 0x430, "lld_scan_sched 
 extern r_ip_funcs_t *r_ip_funcs_p;
 
 /* r_modules_funcs slot signatures. ke_msg_alloc returns a param_len-byte buffer
- * for the message parameters; ke_msg_send queues a filled message. */
+ * for the message parameters; ke_msg_send queues a filled message. ke_malloc /
+ * ke_free are the kernel heap (type = KE_MEM_*); the co_list_* take a co_list_t
+ * and an element whose first word is the list link (rom/llc.h). */
 typedef uint8_t *(*r_ke_msg_alloc_fn_t)(uint16_t id, uint16_t dest_id, uint16_t src_id, uint16_t param_len);
 typedef void (*r_ke_msg_send_fn_t)(void *param_ptr);
+typedef void *(*r_ke_malloc_fn_t)(uint32_t size, uint8_t type);
+typedef void (*r_ke_free_fn_t)(void *mem);
+typedef _Bool (*r_co_list_extract_fn_t)(void *list, void *elt);
+typedef void (*r_co_list_push_front_fn_t)(void *list, void *elt);
+
+/* Kernel heap the ROM's LLC allocates its LLCP TX elements from. */
+#define KE_MEM_KE_MSG 2
 
 /*
- * The r_modules_funcs dispatch table (partial model), the kernel half.
+ * The r_modules_funcs dispatch table (partial model), the kernel half. The ROM
+ * calls these through the table, so we do too: a slot may be repointed.
  */
 typedef struct r_modules_funcs
 {
-    uint8_t _reserved_00[0xc8];
+    uint8_t _reserved_00[0x1c];
+    r_co_list_extract_fn_t co_list_extract; /* +0x1c unlink an element */
+    uint8_t _reserved_20[0x4c - 0x20];
+    r_co_list_push_front_fn_t co_list_push_front; /* +0x4c insert at the head */
+    uint8_t _reserved_50[0xc8 - 0x50];
     r_ke_msg_alloc_fn_t ke_msg_alloc; /* +0xc8 allocate a kernel message */
     uint8_t _reserved_cc[0x14];       /* 0xcc..0xdf */
     r_ke_msg_send_fn_t ke_msg_send;   /* +0xe0 queue a kernel message */
+    uint8_t _reserved_e4[0x110 - 0xe4];
+    r_ke_free_fn_t ke_free; /* +0x110 kernel heap free */
+    uint8_t _reserved_114[0x120 - 0x114];
+    r_ke_malloc_fn_t ke_malloc; /* +0x120 kernel heap alloc */
 } r_modules_funcs_t;
 
+_Static_assert(offsetof(r_modules_funcs_t, co_list_extract) == 0x1c, "co_list_extract @ +0x1c");
+_Static_assert(offsetof(r_modules_funcs_t, co_list_push_front) == 0x4c, "co_list_push_front @ +0x4c");
 _Static_assert(offsetof(r_modules_funcs_t, ke_msg_alloc) == 0xc8, "ke_msg_alloc @ +0xc8");
 _Static_assert(offsetof(r_modules_funcs_t, ke_msg_send) == 0xe0, "ke_msg_send @ +0xe0");
+_Static_assert(offsetof(r_modules_funcs_t, ke_free) == 0x110, "ke_free @ +0x110");
+_Static_assert(offsetof(r_modules_funcs_t, ke_malloc) == 0x120, "ke_malloc @ +0x120");
 
 /* The live table (absolute symbol r_modules_funcs_p @ 0x3fcdff88). */
 extern r_modules_funcs_t *r_modules_funcs_p;

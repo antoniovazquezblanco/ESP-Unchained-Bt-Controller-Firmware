@@ -8,7 +8,7 @@ else()
     set(_bt_unchained_esp32_board "unknown")
 endif()
 
-idf_component_register(SRCS "bt_unchained_esp32.c" "vsc.c" "lmp_monitor.c" "scan_pin.c"
+idf_component_register(SRCS "bt_unchained_esp32.c" "vsc.c" "lmp_monitor.c" "scan_pin.c" "injector.c"
                        PRIV_REQUIRES bt_unchained bt_protocols bt_rom_esp32 esp_app_format
                        REQUIRED_IDF_TARGETS esp32)
 

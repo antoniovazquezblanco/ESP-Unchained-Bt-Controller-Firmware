@@ -33,4 +33,15 @@ typedef struct
  */
 extern ld_env_t ld_env;
 
+/* Maximum simultaneous BR/EDR ACL links (ld_acl_env is a 7-pointer array). */
+#define BT_ACL_CONN_MAX 7
+
+/*
+ * Per-link BR/EDR ACL driver environments (ld_acl_env, absolute ROM-data symbol).
+ * The slot for an inactive link id is NULL; ld_acl_lmp_tx indexes this by the link
+ * id's low byte and returns an error for a NULL slot, so an injector validates the
+ * target link here (and keeps the id in range) before submitting an LMP PDU.
+ */
+extern void *ld_acl_env[BT_ACL_CONN_MAX];
+
 #endif /* LD_ENV_H */

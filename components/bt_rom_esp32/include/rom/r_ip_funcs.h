@@ -32,10 +32,13 @@ typedef void (*r_bt_util_buf_init_fn_t)(bool reset);
 
 /**
  * Signature of r_bt_util_buf_lmp_tx_alloc, slot 1 of the IP functions table.
- * It allocates an LMP TX buffer from exchange memory, returning its EM offset
- * (0 when the pool is exhausted).
+ * It allocates an LMP TX buffer and returns a pointer to its buffer element
+ * (bt_em_lmp_buf_elt_t), with buf_ptr already naming a fresh EM payload buffer, or
+ * NULL when the pool is exhausted. Free it with bt_util_buf_lmp_tx_free, passing
+ * the element's buf_ptr. (Verified against r_lc_send_lmp @ 0x4001c1a8, which
+ * dereferences the return as the element it hands to ld_acl_lmp_tx.)
  */
-typedef uint16_t (*r_bt_util_buf_lmp_tx_alloc_fn_t)(void);
+typedef void *(*r_bt_util_buf_lmp_tx_alloc_fn_t)(void);
 
 /**
  * Signature of r_bt_util_buf_lmp_tx_free, slot 2 of the IP functions table.

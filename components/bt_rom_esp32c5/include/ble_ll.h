@@ -91,6 +91,48 @@ struct os_mbuf;
  * on success, nonzero if the chain is shorter than off+len. */
 extern int r_os_mbuf_copydata(const struct os_mbuf *om, int off, int len, void *dst);
 
+/* Append len bytes to the mbuf chain; returns 0 on success, nonzero on failure. */
+extern int r_os_mbuf_append(struct os_mbuf *om, const void *data, uint16_t len);
+
+/* Free an mbuf chain. */
+extern void r_os_mbuf_free_chain(struct os_mbuf *om);
+
+/* ---- Link-layer connection TX (PDU injection) ---- */
+
+/* The per-connection state machine. Opaque here; we only pass pointers the
+ * controller hands back. The HCI connection handle sits at offset 0x08. */
+struct ble_ll_conn_sm;
+
+/*
+ * Resolve the active connection for an HCI connection handle, or NULL when no such
+ * live connection exists. Walks the controller's active-connection list.
+ */
+extern struct ble_ll_conn_sm *r_ble_ll_conn_sm_find_active_by_handle(uint16_t handle);
+
+/*
+ * Queue one outgoing PDU on a connection: llid 1 data continuation, 2 data start,
+ * 3 control (LLCP); len is the on-air payload length. The mbuf data must already
+ * hold the PDU bytes. Returns 0 on success. The controller takes ownership of om
+ * in every case -- it frees it on failure too -- so never free om after this call.
+ */
+extern int r_ble_ll_conn_enqueue_pkt(struct ble_ll_conn_sm *connsm, struct os_mbuf *om,
+                                      uint8_t llid, uint16_t len);
+
+/*
+ * Allocate an LL mbuf for a PDU: dlen bytes of data capacity, a user header of
+ * user_hdr_len bytes, and leadingspace bytes of headroom. The controller's own
+ * LLCP senders call this with (dlen, BLE_LL_MBUF_HDR_LEN, BLE_LL_MBUF_LEADINGSPACE);
+ * inject does the same so the ble_mbuf_hdr enqueue_pkt stamps has room. NULL when
+ * the pool is empty.
+ */
+extern struct os_mbuf *r_ble_ll_mem_mbuf_get(uint16_t dlen, uint16_t user_hdr_len,
+                                             uint16_t leadingspace);
+
+/* The user-header length and leadingspace the controller's LLCP senders pass to
+ * r_ble_ll_mem_mbuf_get (from the genuine ble_ll_ctrl send path). */
+#define BLE_LL_MBUF_HDR_LEN 36
+#define BLE_LL_MBUF_LEADINGSPACE 7
+
 /* Pool id for r_ble_hci_trans_buf_alloc: the event pool the controller's own
  * events use (falls back to the low-priority event pool when exhausted). */
 #define BLE_HCI_TRANS_BUF_EVT 2

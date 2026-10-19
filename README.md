@@ -24,12 +24,14 @@ ESP-IDF firmware that turns an Espressif chip into a Bluetooth HCI controller re
 
 ## Features
 
-|  Target   |    Radio    | Core ver. |    VSC     |  CompId  | BDADDR | RX ADV CH | LMP Mon | LL Mon |
-| :-------: | :---------: | :-------: | :--------: | :------: | :----: | :-------: | :-----: | :----: |
-|  `esp32`  | BR/EDR + LE |    4.2    | **Custom** | `0xF00D` |   ✓    |     ✓     |    ✓    |   ✓    |
-| `esp32c3` |     LE      |    5.0    | **Custom** | `0xF00D` |   ✓    |     ✓     |    ✗    |   ✓    |
-| `esp32c5` |     LE      |    6.0    | **Custom** | `0xF00D` |   ✓    |     ✓     |    ✗    |   ✓    |
-| `esp32s3` |     LE      |    5.0    | **Custom** | `0xF00D` |   ✓    |     ✓     |    ✗    |   ✓    |
+|  Target   |    Radio    | Core ver. |    VSC     |  CompId  | BDADDR | RX ADV CH | LMP Mon | LMP Inj | LL Mon | LL Inj |
+| :-------: | :---------: | :-------: | :--------: | :------: | :----: | :-------: | :-----: | :-----: | :----: | :----: |
+|  `esp32`  | BR/EDR + LE |    4.2    | **Custom** | `0xF00D` |   ✓    |     ✓     |    ✓    |    ✓    |   ✓    |   ?    |
+| `esp32c3` |     LE      |    5.0    | **Custom** | `0xF00D` |   ✓    |     ✓     |    ✗    |    ✗    |   ✓    |   ✓    |
+| `esp32c5` |     LE      |    6.0    | **Custom** | `0xF00D` |   ✓    |     ✓     |    ✗    |    ✗    |   ✓    |   ✓¹   |
+| `esp32s3` |     LE      |    5.0    | **Custom** | `0xF00D` |   ✓    |     ✓     |    ✗    |    ✗    |   ✓    |   ✓    |
+
+¹ Control PDUs limited to opcodes the controller recognises.
 
 ## Documentation
 

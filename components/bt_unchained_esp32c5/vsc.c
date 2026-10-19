@@ -19,6 +19,7 @@
 
 #include "bt_rom_esp32c5.h"
 #include "hci.h"
+#include "injector.h"
 #include "scan_pin.h"
 #include "traffic_monitor.h"
 
@@ -37,6 +38,7 @@ static int vs_supported_cmds(const uint8_t *params, uint8_t len, uint8_t *rsp, u
 static int vs_set_bdaddr(const uint8_t *params, uint8_t len, uint8_t *rsp, uint8_t *rsp_len);
 static int vs_set_traffic_monitor(const uint8_t *params, uint8_t len, uint8_t *rsp, uint8_t *rsp_len);
 static int vs_set_scan_channel(const uint8_t *params, uint8_t len, uint8_t *rsp, uint8_t *rsp_len);
+static int vs_inject_pdu(const uint8_t *params, uint8_t len, uint8_t *rsp, uint8_t *rsp_len);
 
 /* The commands we register, one list node each. `next` is wired in vsc_register. */
 static ble_ll_hci_vs_cmd_t s_vs_cmds[] = {
@@ -45,6 +47,7 @@ static ble_ll_hci_vs_cmd_t s_vs_cmds[] = {
     {.ocf = UNCHAINED_VS_SET_BDADDR_OCF, .cb = vs_set_bdaddr},
     {.ocf = UNCHAINED_VS_SET_TRAFFIC_MONITOR_OCF, .cb = vs_set_traffic_monitor},
     {.ocf = UNCHAINED_VS_SET_SCAN_CHANNEL_OCF, .cb = vs_set_scan_channel},
+    {.ocf = UNCHAINED_VS_INJECT_PDU_OCF, .cb = vs_inject_pdu},
 };
 
 /* 0xFC00 INFO: firmware name, firmware version and board name, each prefixed by
@@ -125,6 +128,14 @@ static int vs_set_scan_channel(const uint8_t *params, uint8_t len, uint8_t *rsp,
     if (!scan_pin_set(params[0]))
         return HCI_ERR_INVALID_PARAMS;
     return HCI_SUCCESS;
+}
+
+/* 0xFC05 INJECT_PDU: transmit one crafted LL PDU on an owned link (injector.c). */
+static int vs_inject_pdu(const uint8_t *params, uint8_t len, uint8_t *rsp, uint8_t *rsp_len)
+{
+    (void)rsp;
+    *rsp_len = 0;
+    return inject_pdu(params, len);
 }
 
 void vsc_register(void)

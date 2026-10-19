@@ -71,4 +71,20 @@
 #define UNCHAINED_VS_SET_SCAN_CHANNEL_OPCODE \
     HCI_OPCODE(HCI_OGF_VENDOR, UNCHAINED_VS_SET_SCAN_CHANNEL_OCF) /* 0xFC04 */
 
+/*
+ * INJECT_PDU: transmit an attacker-crafted link-layer PDU on an active connection
+ * the controller owns -- the write twin of the traffic monitor. See pdu_inject.h
+ * for the parameter layout and the PDU encoding (which mirrors the 0xFF capture
+ * event, so a captured PDU can be replayed).
+ *
+ * in:  [0] kind (PDU_INJECT_KIND_*), [1..2] link id / connection handle
+ *      (little-endian), [3..] the PDU.
+ * out: status; INVALID_PARAMS (short/garbled), UNSUPPORTED_FEATURE (a kind this
+ *      target has no path for, e.g. LMP on a BLE-only chip),
+ *      MEM_CAPACITY_EXCEEDED (TX pool empty), COMMAND_DISALLOWED (no such active
+ *      link, or the controller refused the submit).
+ */
+#define UNCHAINED_VS_INJECT_PDU_OCF 0x005
+#define UNCHAINED_VS_INJECT_PDU_OPCODE HCI_OPCODE(HCI_OGF_VENDOR, UNCHAINED_VS_INJECT_PDU_OCF) /* 0xFC05 */
+
 #endif /* UNCHAINED_VSC_H */

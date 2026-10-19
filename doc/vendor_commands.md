@@ -14,6 +14,7 @@ Any other opcode in the group replies `0x01` Unknown HCI Command.
 | `0xFC02` | `SET_BDADDR`          | Override the controller public address.         |
 | `0xFC03` | `SET_TRAFFIC_MONITOR` | Enable low-level link traffic capture.          |
 | `0xFC04` | `SET_SCAN_CHANNEL`    | Pin advertising reception to one primary channel. |
+| `0xFC05` | `INJECT_PDU`          | Transmit a crafted LL/LMP PDU on an active link. |
 
 ### `0xFC00` INFO
 
@@ -37,7 +38,7 @@ Returns status, then a little-endian `uint64` bitfield where bit N is set when t
 `INFO` is bit 0.
 Commands past OCF 63 read as absent.
 
-A build with all five commands returns `00 1f 00 00 00 00 00 00 00`.
+A build with all six commands returns `00 3f 00 00 00 00 00 00 00`.
 
 ### `0xFC02` SET_BDADDR
 
@@ -93,6 +94,62 @@ controller resets.
 Returns status.
 An empty parameter, or a channel other than 0/37/38/39, returns `0x12` Invalid
 HCI Command Parameters.
+
+### `0xFC05` INJECT_PDU
+
+Transmit one attacker-crafted link-layer PDU on a connection the controller owns
+-- the write twin of `SET_TRAFFIC_MONITOR`. The LL PDU is encoded exactly as the
+`0xFF` capture event carries it, so a captured PDU can be replayed, tweaked or
+malformed. Injecting a raw LL/LMP PDU **bypasses the link-controller state
+machine**: that is the point for testing, but it can desync or wedge the
+controller (recover with `HCI_Reset`). Authorised testing only.
+
+| Offset | Size | Field                                                       |
+| :----- | :--- | :--------------------------------------------------------- |
+| 0      | 1    | Kind: `0x01` BR/EDR LMP, `0x02` BLE LL                     |
+| 1      | 2    | Link id / connection handle, little-endian                 |
+| 3      | *n*  | The PDU (see below)                                        |
+
+The link id / handle is the controller link the PDU goes out on. The host learns
+it from a **TX** capture event (`0xFF`, direction `0x00`); RX captures report link
+id `0xFF` and cannot be used to source it.
+
+**BLE LL** (`kind 0x02`) -- the PDU mirrors the capture event's LL body:
+
+| Offset | Size | Field                                                  |
+| :----- | :--- | :---------------------------------------------------- |
+| 3      | 1    | LLID: `0x01` data continuation, `0x02` data start, `0x03` control (LLCP) |
+| 4      | 1    | Payload length                                        |
+| 5      | *n*  | Payload (for control, the LLCP opcode first)         |
+
+Control (LLCP) payload is capped at 27 bytes; data at 251. On the C3/S3/C5 the
+data LLID start/continuation choice is made by the controller at transmit time,
+so LLID `0x01` and `0x02` currently behave the same.
+
+On the C3/S3, data longer than the link's current maximum TX octets (27 without
+Data Length Extension) is fragmented by the controller into a start PDU plus
+continuations, exactly like host ACL, and each injected data PDU is reported in
+Number Of Completed Packets like host ACL. Only one control PDU is in flight per
+link: while one (injected or the controller's own) awaits its air ack, a control
+injection returns `0x0C`; retry after a connection event.
+
+**BR/EDR LMP** (`kind 0x01`) -- the PDU is the raw LMP bytes, opcode first
+(`byte0 = opcode<<1 | TID`; `0x7F` escapes to a 1-byte extended opcode in
+`byte1`), up to 17 bytes.
+
+Per-target support: the BLE-only targets (ESP32-C3, ESP32-S3, ESP32-C5) implement
+`kind 0x02` BLE LL and reject `kind 0x01` LMP; the classic ESP32 implements
+`kind 0x01` LMP and does not yet implement `kind 0x02` BLE LL.
+
+Returns status:
+
+| Status | Meaning |
+| :----- | :------ |
+| `0x00` | Success -- the PDU was queued for transmission. |
+| `0x11` | Unsupported Feature -- this target has no path for that kind. |
+| `0x12` | Invalid HCI Command Parameters -- too short, length mismatch, or a bad LLID / oversized payload. |
+| `0x07` | Memory Capacity Exceeded -- the controller TX buffer pool is empty. |
+| `0x0C` | Command Disallowed -- no such active link, a control PDU is already in flight on it (retry), or the controller refused the submit. |
 
 ## Events
 

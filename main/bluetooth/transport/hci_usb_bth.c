@@ -21,7 +21,7 @@
 #include "esp_check.h"
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
+#include "freertos/semphr.h"
 #include "tinyusb.h"
 #include "tinyusb_default_config.h"
 #include "tusb.h"
@@ -100,9 +100,16 @@ static const char *s_strings[] = {
 
 /* ---- controller -> host ------------------------------------------------- */
 
+/* How long a packet waits for the previous IN transfer before we give up on it. */
+#define BTH_TX_TIMEOUT pdMS_TO_TICKS(1000)
+
+/* Taken while an IN transfer reads txbuf; given back by the sent callbacks. */
+static SemaphoreHandle_t s_tx_idle;
+
 /* Deliver one controller->host packet to its endpoint. The controller only ever
- * sends events and ACL upward; retry while the endpoint FIFO is busy and give up
- * if the host never drains, so a stalled host cannot wedge the bridge task.
+ * sends events and ACL upward. TinyUSB reads the buffer until the transfer's sent
+ * callback, so wait for that before reusing txbuf; give up after a timeout (a bus
+ * reset never completes it), so a stalled host cannot wedge the bridge task.
  *
  * The caller's buffer points one byte into the reassembled frame (the H4 type
  * byte was stripped), so it is unaligned. The USB-OTG (dwc2) reads the TX FIFO
@@ -119,21 +126,27 @@ static int bth_send(uint8_t type, const uint8_t *data, size_t len)
         ESP_LOGW(TAG, "packet too large (%u bytes), dropped", (unsigned)len);
         return 0;
     }
+    xSemaphoreTake(s_tx_idle, BTH_TX_TIMEOUT);
     memcpy(txbuf, data, len);
 
-    bool sent = false;
-    for (int tries = 0; tries < 1000; tries++) {
-        if (tud_mounted()) {
-            sent = (type == HCI_PKT_EVT) ? tud_bt_event_send(txbuf, (uint16_t)len)
-                                         : tud_bt_acl_data_send(txbuf, (uint16_t)len);
-        }
-        if (sent) {
-            return (int)len;
-        }
-        vTaskDelay(pdMS_TO_TICKS(1));
+    bool sent = tud_mounted() && ((type == HCI_PKT_EVT) ? tud_bt_event_send(txbuf, (uint16_t)len)
+                                                        : tud_bt_acl_data_send(txbuf, (uint16_t)len));
+    if (!sent) {
+        xSemaphoreGive(s_tx_idle);
+        ESP_LOGW(TAG, "host not draining, dropped a %u byte packet", (unsigned)len);
+        return 0;
     }
-    ESP_LOGW(TAG, "host not draining, dropped a %u byte packet", (unsigned)len);
-    return 0;
+    return (int)len;
+}
+
+void tud_bt_event_sent_cb(uint16_t sent_bytes)
+{
+    xSemaphoreGive(s_tx_idle);
+}
+
+void tud_bt_acl_data_sent_cb(uint16_t sent_bytes)
+{
+    xSemaphoreGive(s_tx_idle);
 }
 
 static const vhci_bridge_pkt_io_t s_pkt_io = {
@@ -160,6 +173,10 @@ esp_err_t hci_usb_bth_init(void)
     tusb_cfg.descriptor.string = s_strings;
     tusb_cfg.descriptor.string_count = sizeof(s_strings) / sizeof(s_strings[0]);
     tusb_cfg.descriptor.full_speed_config = s_fs_config_desc;
+
+    s_tx_idle = xSemaphoreCreateBinary();
+    ESP_RETURN_ON_FALSE(s_tx_idle != NULL, ESP_ERR_NO_MEM, TAG, "tx semaphore");
+    xSemaphoreGive(s_tx_idle);
 
     ESP_RETURN_ON_ERROR(tinyusb_driver_install(&tusb_cfg), TAG, "tinyusb install");
 

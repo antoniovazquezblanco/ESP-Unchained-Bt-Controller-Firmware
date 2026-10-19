@@ -12,6 +12,8 @@
 #include "rom/ip_funcs.h"
 #include "rom/hci.h"
 #include "rom/lld.h"
+#include "rom/llc.h"
+#include "rom/ble_util_buf.h"
 #include "rom/sdk_config.h"
 
 #endif /* ESP32C3_ROM_ROM_H */

@@ -19,6 +19,7 @@
 
 #include "bt_rom_esp32s3.h"
 #include "hci.h"
+#include "injector.h"
 #include "scan_pin.h"
 #include "traffic_monitor.h"
 
@@ -51,6 +52,7 @@ static void vs_supported_cmds(uint16_t opcode, uint16_t length, const uint8_t *p
 static void vs_set_bdaddr(uint16_t opcode, uint16_t length, const uint8_t *payload);
 static void vs_set_traffic_monitor(uint16_t opcode, uint16_t length, const uint8_t *payload);
 static void vs_set_scan_channel(uint16_t opcode, uint16_t length, const uint8_t *payload);
+static void vs_inject_pdu(uint16_t opcode, uint16_t length, const uint8_t *payload);
 
 /* The table of vendor-specific commands, mapping opcodes to their handlers. */
 static const vs_cmd_t s_vs_cmds[] = {
@@ -59,6 +61,7 @@ static const vs_cmd_t s_vs_cmds[] = {
     {HCI_OPCODE(HCI_OGF_VENDOR, UNCHAINED_VS_SET_BDADDR_OCF), vs_set_bdaddr},
     {HCI_OPCODE(HCI_OGF_VENDOR, UNCHAINED_VS_SET_TRAFFIC_MONITOR_OCF), vs_set_traffic_monitor},
     {HCI_OPCODE(HCI_OGF_VENDOR, UNCHAINED_VS_SET_SCAN_CHANNEL_OCF), vs_set_scan_channel},
+    {HCI_OPCODE(HCI_OGF_VENDOR, UNCHAINED_VS_INJECT_PDU_OCF), vs_inject_pdu},
 };
 
 /*
@@ -186,6 +189,12 @@ static void vs_set_scan_channel(uint16_t opcode, uint16_t length, const uint8_t 
         return;
     }
     vs_cmd_complete_status(opcode, HCI_SUCCESS);
+}
+
+/* 0xFC05 INJECT_PDU: transmit one crafted LL PDU on an owned link (injector.c). */
+static void vs_inject_pdu(uint16_t opcode, uint16_t length, const uint8_t *payload)
+{
+    vs_cmd_complete_status(opcode, inject_pdu(payload, length));
 }
 
 _Bool vsc_owns(uint16_t opcode)
