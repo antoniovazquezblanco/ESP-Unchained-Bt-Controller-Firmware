@@ -134,6 +134,11 @@ Number Of Completed Packets like host ACL. Only one control PDU is in flight per
 link: while one (injected or the controller's own) awaits its air ack, a control
 injection returns `0x0C`; retry after a connection event.
 
+On the C5, a control PDU's first byte is the LLCP opcode and must be one the
+controller knows (`0x00`..`0x2A`); an opcode past that, or a control payload over
+27 bytes, returns `0x12` (the controller would otherwise fault). Data is capped at
+251 bytes. Known opcodes, including a wrong-length body, are sent as given.
+
 The classic ESP32 injects a single LL PDU without fragmenting, so an LL payload is
 capped at 27 octets (data) / 26 (control); a longer one returns `0x12`. Data goes
 through the controller's own send path (reported in Number Of Completed Packets);

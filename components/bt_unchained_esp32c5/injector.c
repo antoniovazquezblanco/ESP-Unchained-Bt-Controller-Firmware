@@ -34,9 +34,21 @@ static uint8_t inject_ll(uint16_t handle, const uint8_t *pdu, uint16_t pdu_len)
     const uint8_t *payload = pdu + PDU_INJECT_LL_OFF_PAYLOAD;
     if (len == 0 || len > pdu_len - PDU_INJECT_LL_HDR_LEN)
         return HCI_ERR_INVALID_PARAMS;
-    if (llid != PDU_INJECT_LLID_DATA_CONT && llid != PDU_INJECT_LLID_DATA_START &&
-        llid != PDU_INJECT_LLID_CONTROL)
+    switch (llid) {
+    case PDU_INJECT_LLID_CONTROL:
+        /* The opcode (first payload byte) must be in range or enqueue_pkt asserts
+         * and resets the controller; cap the length to a single control PDU. */
+        if (len > BLE_LL_LLCP_PDU_MAX || payload[0] > BLE_LL_LLCP_OPCODE_MAX)
+            return HCI_ERR_INVALID_PARAMS;
+        break;
+    case PDU_INJECT_LLID_DATA_CONT:
+    case PDU_INJECT_LLID_DATA_START:
+        if (len > BLE_LL_ACL_PDU_MAX)
+            return HCI_ERR_INVALID_PARAMS;
+        break;
+    default:
         return HCI_ERR_INVALID_PARAMS;
+    }
 
     struct ble_ll_conn_sm *connsm = r_ble_ll_conn_sm_find_active_by_handle(handle);
     if (connsm == NULL)

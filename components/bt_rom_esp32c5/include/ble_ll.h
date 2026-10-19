@@ -114,9 +114,24 @@ extern struct ble_ll_conn_sm *r_ble_ll_conn_sm_find_active_by_handle(uint16_t ha
  * 3 control (LLCP); len is the on-air payload length. The mbuf data must already
  * hold the PDU bytes. Returns 0 on success. The controller takes ownership of om
  * in every case -- it frees it on failure too -- so never free om after this call.
+ *
+ * For a control PDU it reads the first payload byte as the LLCP opcode and
+ * r_ll_assert()s (fatal: resets the controller) when it exceeds
+ * BLE_LL_LLCP_OPCODE_MAX -- it indexes a 43-entry per-opcode length table by it --
+ * so a caller must reject an out-of-range opcode first.
  */
 extern int r_ble_ll_conn_enqueue_pkt(struct ble_ll_conn_sm *connsm, struct os_mbuf *om,
-                                      uint8_t llid, uint16_t len);
+                                     uint8_t llid, uint16_t len);
+
+/* Highest LLCP opcode r_ble_ll_conn_enqueue_pkt accepts for a control PDU; past
+ * this it asserts (g_ble_ll_ctrl_pkt_lengths_ro has 43 entries, opcodes 0x00..0x2a). */
+#define BLE_LL_LLCP_OPCODE_MAX 0x2a
+
+/* Single-PDU payload caps: the largest LL data PDU on air (Data Length Extension
+ * maximum), and a conservative ceiling for an injected control PDU (every standard
+ * LLCP PDU fits, e.g. LL_CONNECTION_PARAM_REQ at 24). */
+#define BLE_LL_ACL_PDU_MAX 251
+#define BLE_LL_LLCP_PDU_MAX 27
 
 /*
  * Allocate an LL mbuf for a PDU: dlen bytes of data capacity, a user header of

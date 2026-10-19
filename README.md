@@ -31,7 +31,7 @@ ESP-IDF firmware that turns an Espressif chip into a Bluetooth HCI controller re
 | `esp32c5` |     LE      |    6.0    | **Custom** | `0xF00D` |   ✓    |     ✓     |    ✗    |    ✗    |   ✓    |   ✓¹   |
 | `esp32s3` |     LE      |    5.0    | **Custom** | `0xF00D` |   ✓    |     ✓     |    ✗    |    ✗    |   ✓    |   ✓    |
 
-¹ Control PDUs limited to opcodes the controller recognises.
+¹ Control PDUs limited to the opcodes the controller recognises.
 
 ## Documentation
 
