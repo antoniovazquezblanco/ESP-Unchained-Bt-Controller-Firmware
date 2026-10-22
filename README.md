@@ -15,12 +15,12 @@ ESP-IDF firmware that turns an Espressif chip into a Bluetooth HCI controller re
 
 ## Supported hardware
 
-| Board                                          |                                        Image                                         |  Target   | Transport                 |    Display     |
-| :--------------------------------------------- | :----------------------------------------------------------------------------------: | :-------: | :------------------------ | :------------: |
-| **ESP32-DevKitC-32E** / **ESP32-DevKitC-32UE** |  <img src="doc/img/board_esp32devkitc32.png" alt="ESP32-DevKitC-32E" height="120">   |  `esp32`  | UART0 @ 921600 (USB-UART) |       -        |
-| **ESP32-C3 SuperMini**                         | <img src="doc/img/board_esp32c3supermini.png" alt="ESP32-C3 SuperMini" height="120"> | `esp32c3` | USB-Serial                |       -        |
-| **ScapyCon 2026 badge**                        |  <img src="doc/img/board_scapycon2026.png" alt="SCAPYCON 2026 badge" height="120">   | `esp32c5` | USB-Serial                | ST7789 320×240 |
-| **ESP32-S3-DevKitC-1**                         |  <img src="doc/img/board_esp32s3devkitc.png" alt="ESP32-S3-DevKitC-1" height="120">  | `esp32s3` | USB-BTH                   |       -        |
+| Board                            |                                        Image                                         |  Target   | Transport                 |            UI             |
+| :------------------------------- | :----------------------------------------------------------------------------------: | :-------: | :------------------------ | :-----------------------: |
+| **ESP32-DevKitC-32E** / **32UE** |  <img src="doc/img/board_esp32devkitc32.png" alt="ESP32-DevKitC-32E" height="120">   |  `esp32`  | UART0 @ 921600 (USB-UART) |             -             |
+| **ESP32-C3 SuperMini**           | <img src="doc/img/board_esp32c3supermini.png" alt="ESP32-C3 SuperMini" height="120"> | `esp32c3` | USB-Serial                |             -             |
+| **ScapyCon 2026 badge**          |  <img src="doc/img/board_scapycon2026.png" alt="SCAPYCON 2026 badge" height="120">   | `esp32c5` | USB-Serial                | ST7789 320×240<br>RGB LED |
+| **ESP32-S3-DevKitC-1**           |  <img src="doc/img/board_esp32s3devkitc.png" alt="ESP32-S3-DevKitC-1" height="120">  | `esp32s3` | USB-BTH                   |          RGB LED          |
 
 ## Features
 
