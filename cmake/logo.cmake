@@ -13,7 +13,8 @@ if(CONFIG_UNCHAINED_DISPLAY_LOGO)
     add_custom_command(
         OUTPUT "${logo_hdr}"
         COMMAND "${PYTHON}" "${logo_dir}/render_logo.py"
-                320 240 --links 2 --format c -o "${logo_hdr}"
+                ${CONFIG_UNCHAINED_DISPLAY_WIDTH} ${CONFIG_UNCHAINED_DISPLAY_HEIGHT}
+                --links ${CONFIG_UNCHAINED_DISPLAY_LOGO_LINKS} --format c -o "${logo_hdr}"
         DEPENDS "${logo_dir}/render_logo.py"
                 "${logo_dir}/sprites/part1_left.png"
                 "${logo_dir}/sprites/part2_mid.png"

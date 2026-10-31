@@ -24,6 +24,7 @@ Available boards:
 | `esp32c3supermini`  | `esp32c3` | ESP32-C3 Super Mini; no display                                                        |
 | `esp32s3devkitc`    | `esp32s3` | ESP32-S3-DevKitC-1 as a native USB Bluetooth dongle (USB-OTG, BTH class); console on UART0 |
 | `esp32devkitc`      | `esp32`   | ESP32-DevKitC (WROOM-32E / -32UE); dual-mode BR/EDR + BLE; HCI over UART0, console off |
+| `ttgotdisplay`      | `esp32`   | LilyGO TTGO T-Display and clones (e.g. Tenstar); as `esp32devkitc`, log on the ST7789  |
 
 Building with no board selected is a compile check only: it produces a controller with no HCI transport, which runs but cannot be talked to.
 

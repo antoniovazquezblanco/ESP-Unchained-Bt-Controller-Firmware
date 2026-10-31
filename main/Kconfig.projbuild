@@ -21,6 +21,13 @@ config UNCHAINED_DISPLAY_LOGO
         header (logo_img.h) from utils/logo -- this needs Pillow in the build
         Python (pip install pillow). The header itself is not checked in.
 
+config UNCHAINED_DISPLAY_LOGO_LINKS
+    int "Logo chain links per side"
+    depends on UNCHAINED_DISPLAY_LOGO
+    default 2
+    help
+        Mid chain sections on each side of the rune. The logo is scaled by the largest integer factor that fits the panel and the splash text sits below a 2x logo, so pick the count that renders at 2x (2 for 320x240, 0 for 240x135).
+
 config UNCHAINED_DISPLAY_SPI_HOST
     int "SPI host (1=SPI2, 2=SPI3)"
     default 1
@@ -66,6 +73,18 @@ config UNCHAINED_DISPLAY_WIDTH
 config UNCHAINED_DISPLAY_HEIGHT
     int "Panel height (px)"
     default 240
+
+config UNCHAINED_DISPLAY_X_GAP
+    int "Panel column offset (px)"
+    default 0
+    help
+        Where the visible area starts in the controller's RAM, after rotation. Needed by panels smaller than the ST7789's 240x320 RAM, such as 135x240.
+
+config UNCHAINED_DISPLAY_Y_GAP
+    int "Panel row offset (px)"
+    default 0
+    help
+        Row counterpart of UNCHAINED_DISPLAY_X_GAP.
 
 config UNCHAINED_DISPLAY_BGR_ORDER
     bool "Panel expects BGR subpixel order"

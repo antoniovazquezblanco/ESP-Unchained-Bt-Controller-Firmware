@@ -1,0 +1,44 @@
+# SPDX-FileCopyrightText: 2026 Antonio Vázquez Blanco <antoniovazquezblanco@gmail.com>
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Board: LilyGO TTGO T-Display (ESP32) and its clones, e.g. Tenstar's
+#
+# Classic ESP32 (ESP32-D0WDQ6), 4 or 16 MB flash, no native USB, CH9102 (CP2104
+# on early units) USB-UART bridge wired to UART0 (TX=GPIO1, RX=GPIO3).
+# Buttons on GPIO0 and GPIO35 (unused).
+# Layered on top of the common sdkconfig.defaults by:
+#   idf.py -DBOARD=ttgotdisplay set-target esp32 build
+
+# 4 MB runs on both flash variants.
+CONFIG_ESPTOOLPY_FLASHSIZE_4MB=y
+
+# Controller in dual mode (BR/EDR + BLE)
+CONFIG_BTDM_CTRL_MODE_BTDM=y
+CONFIG_BTDM_CTRL_HCI_MODE_VHCI=y
+
+# HCI transport
+# Bridge VHCI to UART0, reaches the host via the onboard USB-UART.
+# That UART cannot also carry the console, so the log goes to the display only.
+CONFIG_UNCHAINED_HCI_OVER_UART=y
+CONFIG_UNCHAINED_HCI_UART_NUM=0
+CONFIG_UNCHAINED_HCI_UART_TX_GPIO=1
+CONFIG_UNCHAINED_HCI_UART_RX_GPIO=3
+CONFIG_UNCHAINED_HCI_UART_BAUD=921600
+CONFIG_ESP_CONSOLE_NONE=y
+
+# Display: 1.14" ST7789V IPS, 135x240 panel mounted landscape. It sits at a
+# (40, 53) offset in the controller's 240x320 RAM.
+CONFIG_UNCHAINED_DISPLAY_ENABLED=y
+CONFIG_UNCHAINED_DISPLAY_SPI_HOST=2
+CONFIG_UNCHAINED_DISPLAY_SCLK_GPIO=18
+CONFIG_UNCHAINED_DISPLAY_MOSI_GPIO=19
+CONFIG_UNCHAINED_DISPLAY_CS_GPIO=5
+CONFIG_UNCHAINED_DISPLAY_DC_GPIO=16
+CONFIG_UNCHAINED_DISPLAY_RST_GPIO=23
+CONFIG_UNCHAINED_DISPLAY_BL_GPIO=4
+CONFIG_UNCHAINED_DISPLAY_PCLK_HZ=40000000
+CONFIG_UNCHAINED_DISPLAY_WIDTH=240
+CONFIG_UNCHAINED_DISPLAY_HEIGHT=135
+CONFIG_UNCHAINED_DISPLAY_X_GAP=40
+CONFIG_UNCHAINED_DISPLAY_Y_GAP=53
+CONFIG_UNCHAINED_DISPLAY_LOGO_LINKS=0

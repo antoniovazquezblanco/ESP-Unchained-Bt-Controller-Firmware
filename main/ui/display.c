@@ -183,6 +183,7 @@ esp_err_t display_init(void)
     esp_lcd_panel_invert_color(s_panel, true);
     esp_lcd_panel_swap_xy(s_panel, true);
     esp_lcd_panel_mirror(s_panel, true, false);
+    esp_lcd_panel_set_gap(s_panel, CONFIG_UNCHAINED_DISPLAY_X_GAP, CONFIG_UNCHAINED_DISPLAY_Y_GAP);
     esp_lcd_panel_disp_on_off(s_panel, true);
 
     backlight_on();
